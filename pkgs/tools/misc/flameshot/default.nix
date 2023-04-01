@@ -25,6 +25,8 @@ mkDerivation rec {
 
   nativeBuildInputs = [ cmake qttools qtsvg ];
   buildInputs = [ qtbase ];
+  
+  cmakeFlags = [ "-DUSE_WAYLAND_CLIPBOARD=true" ];
 
   meta = with lib; {
     description = "Powerful yet simple to use screenshot software";
