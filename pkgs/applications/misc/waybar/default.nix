@@ -1,6 +1,6 @@
 { lib
 , stdenv
-, fetchFromGitHub
+, fetchgit
 , meson
 , pkg-config
 , ninja
@@ -38,11 +38,10 @@ stdenv.mkDerivation rec {
   pname = "waybar";
   version = "0.9.17";
 
-  src = fetchFromGitHub {
-    owner = "Alexays";
-    repo = "Waybar";
-    rev = version;
-    hash = "sha256-sdNenmzI/yvN9w4Z83ojDJi+2QBx2hxhJQCFkc5kCZw=";
+  src = fetchgit {
+    url = "https://github.com/Alexays/Waybar.git";
+    rev = "20a8039a2551ad16ff307e95371d50a879110bbb";
+    hash = "sha256-L4UXCQAgOOPmi2nGeK8ERIux7WQtHk4zAwmKitmtlYM=";
   };
 
   nativeBuildInputs = [
