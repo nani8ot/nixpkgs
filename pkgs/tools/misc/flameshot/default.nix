@@ -6,6 +6,7 @@
 , qttools
 , qtsvg
 , nix-update-script
+, kguiaddons
 }:
 
 mkDerivation rec {
@@ -20,12 +21,14 @@ mkDerivation rec {
   };
 
   passthru = {
-    updateScript = nix-update-script { };
+    updateScript = nix-update-script {
+      attrPath = pname;
+    };
   };
 
-  nativeBuildInputs = [ cmake qttools qtsvg ];
+  nativeBuildInputs = [ cmake qttools qtsvg kguiaddons ];
   buildInputs = [ qtbase ];
-  
+
   cmakeFlags = [ "-DUSE_WAYLAND_CLIPBOARD=true" ];
 
   meta = with lib; {
@@ -33,6 +36,6 @@ mkDerivation rec {
     homepage = "https://github.com/flameshot-org/flameshot";
     maintainers = with maintainers; [ scode oxalica ];
     license = licenses.gpl3Plus;
-    platforms = platforms.linux ++ platforms.darwin;
+    platforms = platforms.linux;
   };
 }
