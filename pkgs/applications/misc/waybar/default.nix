@@ -98,6 +98,7 @@ stdenv.mkDerivation rec {
     "-Dsystemd=disabled"
     "-Dgtk-layer-shell=enabled"
     "-Dman-pages=enabled"
+    "-Dexperimental=true"
   ];
 
   preFixup = lib.optionalString withMediaPlayer ''
