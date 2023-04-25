@@ -40,8 +40,8 @@ stdenv.mkDerivation rec {
 
   src = fetchgit {
     url = "https://github.com/Alexays/Waybar.git";
-    rev = "20a8039a2551ad16ff307e95371d50a879110bbb";
-    hash = "sha256-L4UXCQAgOOPmi2nGeK8ERIux7WQtHk4zAwmKitmtlYM=";
+    rev = "61648c55d9442b0b81989b8a069c66885e4da364";
+    hash = "sha256-Qlg5VWvGmqUuhRPb13Cox7c/xXSReOQjt8wZhR1CDCo=";
   };
 
   nativeBuildInputs = [
