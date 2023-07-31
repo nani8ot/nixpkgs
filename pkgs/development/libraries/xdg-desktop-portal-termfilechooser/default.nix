@@ -31,6 +31,10 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ meson ninja pkg-config scdoc wayland-scanner makeWrapper ];
   buildInputs = [ inih libdrm mesa systemd wayland wayland-protocols ];
 
+  postInstall = ''
+    wrapProgram $out/libexec/xdg-desktop-portal-wlr --prefix PATH ":" ${lib.makeBinPath [ kitty ]}
+  '';
+
   mesonFlags = [
     "-Dsd-bus-provider=libsystemd"
   ];
