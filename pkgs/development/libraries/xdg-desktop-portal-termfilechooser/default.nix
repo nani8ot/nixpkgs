@@ -13,6 +13,7 @@
 , scdoc
 , systemd
 , wayland
+, kitty
 }:
 
 stdenv.mkDerivation rec {
