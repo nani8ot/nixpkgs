@@ -33,7 +33,7 @@ stdenv.mkDerivation rec {
   buildInputs = [ inih libdrm mesa systemd wayland wayland-protocols ];
 
   postInstall = ''
-    wrapProgram $out/libexec/xdg-desktop-portal-wlr --prefix PATH ":" ${lib.makeBinPath [ kitty ]}
+    wrapProgram $out/libexec/xdg-desktop-portal-termfilechooser --prefix PATH ":" ${lib.makeBinPath [ kitty ]}
   '';
 
   mesonFlags = [
