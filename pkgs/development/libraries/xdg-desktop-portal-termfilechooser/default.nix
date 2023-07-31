@@ -18,7 +18,7 @@
 
 stdenv.mkDerivation rec {
   pname = "xdg-desktop-portal-termfilechooser";
-  version = "0.1.0-1";
+  version = "0.1.1";
 
   src = fetchFromGitHub {
     owner = "nani8ot";
