@@ -24,17 +24,13 @@ stdenv.mkDerivation rec {
     owner = "nani8ot";
     repo = pname;
     rev = "main";
-    sha256 = "sha256-4s3n5EONwmDhdMrs7NdCqM/IAcNXmmbuhv84btCredg=";
+    sha256 = "sha256-4s3n5EONwmDhdMrs7NdCqM/IAcNXmmbuhv84btCred1=";
   };
 
   strictDeps = true;
   depsBuildBuild = [ pkg-config ];
   nativeBuildInputs = [ meson ninja pkg-config scdoc wayland-scanner makeWrapper ];
   buildInputs = [ inih libdrm mesa systemd wayland wayland-protocols ];
-
-  postInstall = ''
-    wrapProgram $out/libexec/xdg-desktop-portal-termfilechooser --prefix PATH ":" ${lib.makeBinPath [ kitty ]}
-  '';
 
   mesonFlags = [
     "-Dsd-bus-provider=libsystemd"
