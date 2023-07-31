@@ -1,37 +1,37 @@
 { lib
 , python3
-, fetchurl
+, fetchFromGitHub
+, fetchYarnDeps
 , zlib
-, mkYarnModules
 , nixosTests
-, pkgs
 , postgresqlTestHook
 , postgresql
+, yarn
+, fixup_yarn_lock
+, nodejs
 , server-mode ? true
 }:
 
 let
   pname = "pgadmin";
-  version = "7.0";
+  version = "7.5";
+  yarnSha256 = "sha256-rEKMUZksmR2jPwtXy6drNwAJktK/3Dee6EZVFHPngWs=";
 
-  src = fetchurl {
-    url = "https://ftp.postgresql.org/pub/pgadmin/pgadmin4/v${version}/source/pgadmin4-${version}.tar.gz";
-    hash = "sha256-iYsICW9aTG47eWB0g3MlWo5F1BStQLiM84+qxFq7G70=";
+  src = fetchFromGitHub {
+    owner = "pgadmin-org";
+    repo = "pgadmin4";
+    rev = "REL-${lib.versions.major version}_${lib.versions.minor version}";
+    hash = "sha256-o8jPqp4jLF/lZ0frCzPDCSxCy51Nt0mbdeNB44ZwNHI=";
   };
-
-  yarnDeps = mkYarnModules {
-    pname = "${pname}-yarn-deps";
-    inherit version;
-    packageJSON = ./package.json;
-    yarnLock = ./yarn.lock;
-    yarnNix = ./yarn.nix;
-  };
-
 
   # keep the scope, as it is used throughout the derivation and tests
   # this also makes potential future overrides easier
-  pythonPackages = python3.pkgs.overrideScope (final: prev: rec {
-  });
+  pythonPackages = python3.pkgs.overrideScope (final: prev: rec { });
+
+  offlineCache = fetchYarnDeps {
+    yarnLock = ./yarn.lock;
+    hash = yarnSha256;
+  };
 
 in
 
@@ -63,9 +63,13 @@ pythonPackages.buildPythonApplication rec {
 
     # relax dependencies
     sed 's|==|>=|g' -i requirements.txt
-    #TODO: Can be removed once cryptography>=40 has been merged to master
+    #TODO: Can be removed once boto3>=1.28.0 and cryptography>=41 has been merged to master
     substituteInPlace requirements.txt \
-      --replace "cryptography>=40.0.*" "cryptography>=39.0.*"
+      --replace "boto3>=1.28.*" "boto3>=1.26.*"
+    substituteInPlace requirements.txt \
+      --replace "botocore>=1.31.*" "botocore>=1.29.*"
+    substituteInPlace requirements.txt \
+      --replace "cryptography>=41.0.*" "cryptography>=40.0.*"
     # fix extra_require error with "*" in match
     sed 's|*|0|g' -i requirements.txt
     substituteInPlace pkg/pip/setup_pip.py \
@@ -81,14 +85,12 @@ pythonPackages.buildPythonApplication rec {
     echo Creating required directories...
     mkdir -p pip-build/pgadmin4/docs
 
-    # build the documentation
+    echo Building the documentation
     cd docs/en_US
     sphinx-build -W -b html -d _build/doctrees . _build/html
 
     # Build the clean tree
-    cd ../../web
-    cp -r * ../pip-build/pgadmin4
-    cd ../docs
+    cd ..
     cp -r * ../pip-build/pgadmin4/docs
     for DIR in `ls -d ??_??/`
     do
@@ -99,7 +101,24 @@ pythonPackages.buildPythonApplication rec {
     done
     cd ../
 
-    cp -r ${yarnDeps}/* pip-build/pgadmin4
+    # mkYarnModules and mkYarnPackage have problems running the webpacker
+    echo Building the web frontend...
+    cd web
+    export HOME="$TMPDIR"
+    yarn config --offline set yarn-offline-mirror "${offlineCache}"
+    # replace with converted yarn.lock file
+    rm yarn.lock
+    cp ${./yarn.lock} yarn.lock
+    chmod +w yarn.lock
+    fixup_yarn_lock yarn.lock
+    yarn install --offline --frozen-lockfile --ignore-platform --ignore-scripts --no-progress --non-interactive
+    patchShebangs node_modules/
+    yarn webpacker
+    cp -r * ../pip-build/pgadmin4
+    # save some disk space
+    rm -rf ../pip-build/pgadmin4/node_modules
+
+    cd ..
 
     echo Creating distro config...
     echo HELP_PATH = \'../../docs/en_US/_build/html/\' > pip-build/pgadmin4/config_distro.py
@@ -115,7 +134,7 @@ pythonPackages.buildPythonApplication rec {
     cp -v ../pkg/pip/setup_pip.py setup.py
   '';
 
-  nativeBuildInputs = with pythonPackages; [ cython pip sphinx ];
+  nativeBuildInputs = with pythonPackages; [ cython pip sphinx yarn fixup_yarn_lock nodejs ];
   buildInputs = [
     zlib
     pythonPackages.wheel
@@ -170,6 +189,7 @@ pythonPackages.buildPythonApplication rec {
     speaklater3
     google-auth-oauthlib
     google-api-python-client
+    keyring
   ];
 
   passthru.tests = {

@@ -8,14 +8,14 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "memray";
-  version = "1.7.0";
+  version = "1.9.0";
   format = "setuptools";
 
   src = fetchFromGitHub {
     owner = "bloomberg";
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-FM6DVBnYgvciTeF9bf2NDvHGsnccxKqcR5ATj6daQ4w=";
+    hash = "sha256-fXA98kw+2NlbWTLXWK875t1RBIXH2a0SgS+0OseODKI=";
   };
 
   nativeBuildInputs = [

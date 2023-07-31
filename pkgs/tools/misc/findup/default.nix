@@ -2,13 +2,13 @@
 
 stdenv.mkDerivation rec {
   pname = "findup";
-  version = "1.0";
+  version = "1.1.1";
 
   src = fetchFromGitHub {
-    owner = "hiljusti";
+    owner = "booniepepper";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-erlKIiYYlWnhoeD3FnKdxnHjfGmmJVXk44DUja5Unig=";
+    sha256 = "sha256-Tpyiy5oJQ04lqVEOFshFC0+90VoNILQ+N6Dd7lbuH/Q=";
   };
 
   nativeBuildInputs = [ zig ];
@@ -31,9 +31,9 @@ stdenv.mkDerivation rec {
   passthru.tests.version = testers.testVersion { package = findup; };
 
   meta = with lib; {
-    homepage = "https://github.com/hiljusti/findup";
+    homepage = "https://github.com/booniepepper/findup";
     description = "Search parent directories for sentinel files";
     license = licenses.mit;
-    maintainers = with maintainers; [ hiljusti ];
+    maintainers = with maintainers; [ booniepepper ];
   };
 }

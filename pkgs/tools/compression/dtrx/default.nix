@@ -21,19 +21,14 @@
 
 python3Packages.buildPythonApplication rec {
   pname = "dtrx";
-  version = "8.5.0";
+  version = "8.5.1";
 
   src = fetchFromGitHub {
     owner = "dtrx-py";
     repo = "dtrx";
     rev = "refs/tags/${version}";
-    sha256 = "sha256-jx2IHa7Ztg8Dbwgm8mSJQKtNpg0sg5axGssBMTAMDI0=";
+    sha256 = "sha256-KOHafmvl17IABlcBuE7isHVCIYRbA68Dna6rgiiWlkQ=";
   };
-
-  # https://github.com/dtrx-py/dtrx/issues/45
-  postPatch = ''
-    sed -i "s/platform==unsupported/# platform==unsupported/" setup.cfg
-  '';
 
   postInstall =
     let
@@ -52,6 +47,6 @@ python3Packages.buildPythonApplication rec {
     description = "Do The Right Extraction: A tool for taking the hassle out of extracting archives";
     homepage = "https://github.com/dtrx-py/dtrx";
     license = licenses.gpl3Plus;
-    maintainers = [ maintainers.spwhitt ];
+    maintainers = [ ];
   };
 }

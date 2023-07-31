@@ -39,7 +39,7 @@ rustPlatform.buildRustPackage rec {
     description = "A fast line-oriented regex search tool, similar to ag and ack";
     homepage = "https://github.com/BurntSushi/ripgrep";
     license = licenses.unlicense;
-    maintainers = [ maintainers.tailhook ];
+    maintainers = [];
   };
 }
 ```
@@ -535,7 +535,9 @@ directory of the `tokenizers` project's source archive, we use
 ```nix
 { fetchFromGitHub
 , buildPythonPackage
+, cargo
 , rustPlatform
+, rustc
 , setuptools-rust
 }:
 
@@ -558,11 +560,12 @@ buildPythonPackage rec {
 
   sourceRoot = "source/bindings/python";
 
-  nativeBuildInputs = [ setuptools-rust ] ++ (with rustPlatform; [
-    cargoSetupHook
-    rust.cargo
-    rust.rustc
-  ]);
+  nativeBuildInputs = [
+    cargo
+    rustPlatform.cargoSetupHook
+    rustc
+    setuptools-rust
+  ];
 
   # ...
 }
@@ -923,7 +926,7 @@ rustPlatform.buildRustPackage rec {
     description = "A fast line-oriented regex search tool, similar to ag and ack";
     homepage = "https://github.com/BurntSushi/ripgrep";
     license = with licenses; [ mit unlicense ];
-    maintainers = with maintainers; [ tailhook ];
+    maintainers = with maintainers; [];
   };
 }
 ```

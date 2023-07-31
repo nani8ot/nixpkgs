@@ -1,22 +1,20 @@
 { lib
-, stdenv
 , fetchFromGitHub
 , maven
-, javaPackages
 }:
 
-javaPackages.mavenfod rec {
+maven.buildMavenPackage {
   pname = "scim-keycloak-user-storage-spi";
-  version = "unstable-2023-01-03";
+  version = "unstable-2023-07-10";
 
   src = fetchFromGitHub {
     owner = "justin-stephenson";
     repo = "scim-keycloak-user-storage-spi";
-    rev = "1be97049edf096ca0d9a78d988623d5d3f310fb1";
-    hash = "sha256-aGHInyy+VgyfjrXeZ6T6jfI00xaCwrRTehnew+mWYnQ=";
+    rev = "54a3fd77b05079c9ebd931e8b6a3725310a1f7b7";
+    hash = "sha256-rQR8+LevFHTFLoyCPSu50jdSXu4YgBibjVB804rEsFs=";
   };
 
-  mvnHash = "sha256-CK42d+Ta1/XNQWCLaje6sI+C90YvzUcteuasVkUPfCk=";
+  mvnHash = "sha256-vNPSNoOmtD1UMfWvLm8CH7RRatyeu3fnX9zteZpkay0=";
 
   nativeBuildInputs = [
     maven

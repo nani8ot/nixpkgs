@@ -3,13 +3,16 @@ use lock::UrlOrString;
 use rayon::prelude::*;
 use serde_json::{Map, Value};
 use std::{
-    fs, io,
+    fs,
+    io::{self, Read},
     process::{Command, Stdio},
 };
 use tempfile::{tempdir, TempDir};
 use url::Url;
 
-mod lock;
+use crate::util;
+
+pub mod lock;
 
 pub fn lockfile(content: &str, force_git_deps: bool) -> anyhow::Result<Vec<Package>> {
     let mut packages = lock::packages(content)
@@ -87,7 +90,7 @@ pub struct Package {
 
 #[derive(Debug)]
 enum Specifics {
-    Registry { integrity: String },
+    Registry { integrity: lock::Hash },
     Git { workdir: TempDir },
 }
 
@@ -103,7 +106,7 @@ impl Package {
 
         let specifics = match get_hosted_git_url(&resolved)? {
             Some(hosted) => {
-                let mut body = ureq::get(hosted.as_str()).call()?.into_reader();
+                let mut body = util::get_url_with_retry(&hosted)?;
 
                 let workdir = tempdir()?;
 
@@ -134,11 +137,11 @@ impl Package {
                 Specifics::Git { workdir }
             }
             None => Specifics::Registry {
-                integrity: get_ideal_hash(
-                    &pkg.integrity
-                        .expect("non-git dependencies should have assosciated integrity"),
-                )?
-                .to_string(),
+                integrity: pkg
+                    .integrity
+                    .expect("non-git dependencies should have assosciated integrity")
+                    .into_best()
+                    .expect("non-git dependencies should have non-empty assosciated integrity"),
             },
         };
 
@@ -154,10 +157,7 @@ impl Package {
             Specifics::Registry { .. } => {
                 let mut body = Vec::new();
 
-                ureq::get(self.url.as_str())
-                    .call()?
-                    .into_reader()
-                    .read_to_end(&mut body)?;
+                util::get_url_with_retry(&self.url)?.read_to_end(&mut body)?;
 
                 Ok(body)
             }
@@ -181,9 +181,9 @@ impl Package {
         }
     }
 
-    pub fn integrity(&self) -> Option<String> {
+    pub fn integrity(&self) -> Option<&lock::Hash> {
         match &self.specifics {
-            Specifics::Registry { integrity } => Some(integrity.clone()),
+            Specifics::Registry { integrity } => Some(integrity),
             Specifics::Git { .. } => None,
         }
     }
@@ -304,25 +304,9 @@ fn get_hosted_git_url(url: &Url) -> anyhow::Result<Option<Url>> {
     }
 }
 
-fn get_ideal_hash(integrity: &str) -> anyhow::Result<&str> {
-    let split: Vec<_> = integrity.split_ascii_whitespace().collect();
-
-    if split.len() == 1 {
-        Ok(split[0])
-    } else {
-        for hash in ["sha512-", "sha1-"] {
-            if let Some(h) = split.iter().find(|s| s.starts_with(hash)) {
-                return Ok(h);
-            }
-        }
-
-        Err(anyhow!("not sure which hash to select out of {split:?}"))
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{get_hosted_git_url, get_ideal_hash};
+    use super::get_hosted_git_url;
     use url::Url;
 
     #[test]
@@ -352,19 +336,5 @@ mod tests {
                 .is_err(),
             "GitLab URLs should be marked as invalid (lol)"
         );
-    }
-
-    #[test]
-    fn ideal_hashes() {
-        for (input, expected) in [
-            ("sha512-foo sha1-bar", Some("sha512-foo")),
-            ("sha1-bar md5-foo", Some("sha1-bar")),
-            ("sha1-bar", Some("sha1-bar")),
-            ("sha512-foo", Some("sha512-foo")),
-            ("foo-bar sha1-bar", Some("sha1-bar")),
-            ("foo-bar baz-foo", None),
-        ] {
-            assert_eq!(get_ideal_hash(input).ok(), expected);
-        }
     }
 }

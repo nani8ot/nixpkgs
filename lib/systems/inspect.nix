@@ -57,6 +57,7 @@ rec {
     isM68k         = { cpu = { family = "m68k"; }; };
     isS390         = { cpu = { family = "s390"; }; };
     isS390x        = { cpu = { family = "s390"; bits = 64; }; };
+    isLoongArch64  = { cpu = { family = "loongarch"; bits = 64; }; };
     isJavaScript   = { cpu = cpuTypes.javascript; };
 
     is32bit        = { cpu = { bits = 32; }; };
@@ -86,7 +87,7 @@ rec {
     isNone         = { kernel = kernels.none; };
 
     isAndroid      = [ { abi = abis.android; } { abi = abis.androideabi; } ];
-    isGnu          = with abis; map (a: { abi = a; }) [ gnuabi64 gnu gnueabi gnueabihf gnuabielfv1 gnuabielfv2 ];
+    isGnu          = with abis; map (a: { abi = a; }) [ gnuabi64 gnuabin32 gnu gnueabi gnueabihf gnuabielfv1 gnuabielfv2 ];
     isMusl         = with abis; map (a: { abi = a; }) [ musl musleabi musleabihf muslabin32 muslabi64 ];
     isUClibc       = with abis; map (a: { abi = a; }) [ uclibc uclibceabi uclibceabihf ];
 

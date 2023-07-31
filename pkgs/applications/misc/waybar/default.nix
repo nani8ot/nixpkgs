@@ -16,6 +16,7 @@
 , howard-hinnant-date
 , libinotify-kqueue
 , libxkbcommon
+, cavaSupport     ? true,  alsa-lib, fftw, iniparser, ncurses, pipewire, portaudio, SDL2
 , evdevSupport    ? true,  libevdev
 , inputSupport    ? true,  libinput
 , jackSupport     ? true,  libjack2
@@ -33,16 +34,35 @@
 , wireplumberSupport ? true, wireplumber
 , withMediaPlayer ? mprisSupport && false, glib, gobject-introspection, python3
 }:
-
+let
+  # Derived from subprojects/cava.wrap
+  libcava = rec {
+    version = "0.8.4";
+    src = fetchFromGitHub {
+      owner = "LukashonakV";
+      repo = "cava";
+      rev = version;
+      hash = "sha256-66uc0CEriV9XOjSjFTt+bxghEXY1OGrpjd+7d6piJUI=";
+    };
+  };
+in
 stdenv.mkDerivation rec {
   pname = "waybar";
-  version = "0.9.17";
+  version = "0.9.20";
 
   src = fetchgit {
     url = "https://github.com/Alexays/Waybar.git";
     rev = "61648c55d9442b0b81989b8a069c66885e4da364";
     hash = "sha256-Qlg5VWvGmqUuhRPb13Cox7c/xXSReOQjt8wZhR1CDCo=";
   };
+
+  postUnpack = lib.optional cavaSupport ''
+    (
+      cd "$sourceRoot"
+      cp -R --no-preserve=mode,ownership ${libcava.src} subprojects/cava-0.8.4
+      patchShebangs .
+    )
+  '';
 
   nativeBuildInputs = [
     meson ninja pkg-config scdoc wrapGAppsHook
@@ -59,6 +79,13 @@ stdenv.mkDerivation rec {
   buildInputs = with lib;
     [ wayland wlroots gtkmm3 libsigcxx jsoncpp spdlog gtk-layer-shell howard-hinnant-date libxkbcommon ]
     ++ optional  (!stdenv.isLinux) libinotify-kqueue
+    ++ optional  cavaSupport   alsa-lib
+    ++ optional  cavaSupport   iniparser
+    ++ optional  cavaSupport   fftw
+    ++ optional  cavaSupport   ncurses
+    ++ optional  cavaSupport   pipewire
+    ++ optional  cavaSupport   portaudio
+    ++ optional  cavaSupport   SDL2
     ++ optional  evdevSupport  libevdev
     ++ optional  inputSupport  libinput
     ++ optional  jackSupport   libjack2
@@ -79,6 +106,7 @@ stdenv.mkDerivation rec {
   mesonFlags = (lib.mapAttrsToList
     (option: enable: "-D${option}=${if enable then "enabled" else "disabled"}")
     {
+      cava = cavaSupport;
       dbusmenu-gtk = traySupport;
       jack = jackSupport;
       libinput = inputSupport;

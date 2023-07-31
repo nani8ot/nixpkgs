@@ -16,17 +16,21 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "cloud-init";
-  version = "23.1.1";
+  version = "23.2.1";
   namePrefix = "";
 
   src = fetchFromGitHub {
     owner = "canonical";
     repo = "cloud-init";
     rev = "refs/tags/${version}";
-    hash = "sha256-w1UP7JIt/+6UlASB8kv2Lil+1sMTDIrADoYOT/WtaeE=";
+    hash = "sha256-2e05ExF6JOeFR0BUd/iCIYV0XoKTgoI7xz20GQ/bmO4=";
   };
 
-  patches = [ ./0001-add-nixos-support.patch ./0002-Add-Udhcpc-support.patch ];
+  patches = [
+    ./0001-add-nixos-support.patch
+    # upstream: https://github.com/canonical/cloud-init/pull/4190
+    ./0002-Add-Udhcpc-support.patch
+  ];
 
   prePatch = ''
     substituteInPlace setup.py \
@@ -123,6 +127,7 @@ python3.pkgs.buildPythonApplication rec {
   meta = with lib; {
     homepage = "https://github.com/canonical/cloud-init";
     description = "Provides configuration and customization of cloud instance";
+    changelog = "https://github.com/canonical/cloud-init/raw/${version}/ChangeLog";
     license = with licenses; [ asl20 gpl3Plus ];
     maintainers = with maintainers; [ illustris jfroche ];
     platforms = platforms.all;

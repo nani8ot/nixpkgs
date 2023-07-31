@@ -8,11 +8,13 @@
 , libxcb
 , libxkbcommon
 , libxml2
+, gettext
 , meson
 , ninja
 , pango
 , pkg-config
 , scdoc
+, wayland-scanner
 , wayland
 , wayland-protocols
 , wlroots_0_16
@@ -25,20 +27,22 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "labwc";
-  version = "0.6.2";
+  version = "0.6.4";
 
   src = fetchFromGitHub {
     owner = "labwc";
     repo = "labwc";
     rev = finalAttrs.version;
-    hash = "sha256-yZ1tXx7AA9pFc5C6c/J3B03/TfXw1PsAunNNiee3BGU=";
+    hash = "sha256-8FMC0tq5Gp5qDPUmoJTCrHEergDMUbiTco17jPTJUgE=";
   };
 
   nativeBuildInputs = [
+    gettext
     meson
     ninja
     pkg-config
     scdoc
+    wayland-scanner
   ];
 
   buildInputs = [

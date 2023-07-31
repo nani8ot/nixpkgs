@@ -1,11 +1,11 @@
 { lib, fetchFromGitHub
 , version
 , suffix ? ""
-, sha256 ? null
-, src ? fetchFromGitHub { owner = "NixOS"; repo = "nix"; rev = version; inherit sha256; }
+, hash ? null
+, src ? fetchFromGitHub { owner = "NixOS"; repo = "nix"; rev = version; inherit hash; }
 , patches ? [ ]
 }:
-assert (sha256 == null) -> (src != null);
+assert (hash == null) -> (src != null);
 let
   atLeast24 = lib.versionAtLeast version "2.4pre";
   atLeast25 = lib.versionAtLeast version "2.5pre";
@@ -131,6 +131,10 @@ self = stdenv.mkDerivation {
     # https://github.com/NixOS/nix/commits/74b4737d8f0e1922ef5314a158271acf81cd79f8
     (lib.optionalString (stdenv.hostPlatform.system == "armv5tel-linux" || stdenv.hostPlatform.system == "armv6l-linux") "-latomic")
   ];
+
+  postPatch = ''
+    patchShebangs --build tests
+  '';
 
   preConfigure =
     # Copy libboost_context so we don't get all of Boost in our closure.

@@ -16,10 +16,9 @@ buildGoModule rec {
   ldflags = [ "-s" "-w" ];
 
   meta = with lib; {
-    inherit (src.meta) homepage;
     description = "Minimal IRC server bridge to Mattermost";
+    homepage = "https://github.com/42wim/matterircd";
     license = licenses.mit;
     maintainers = with maintainers; [ ];
-    platforms = platforms.unix;
   };
 }

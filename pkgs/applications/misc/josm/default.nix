@@ -3,15 +3,15 @@
 }:
 let
   pname = "josm";
-  version = "18700";
+  version = "18772";
   srcs = {
     jar = fetchurl {
       url = "https://josm.openstreetmap.de/download/josm-snapshot-${version}.jar";
-      hash = "sha256-rJw38pOHi+OIjIKgglU0Y2Tlc/b8K9f04ru2IH0CUJ0=";
+      hash = "sha256-Jy8Z/uYmVKCr9Gq0pOmIG9jfTQekzlpkgQrTDZ+ALI0=";
     };
     macosx = fetchurl {
       url = "https://josm.openstreetmap.de/download/macosx/josm-macos-${version}-java17.zip";
-      hash = "sha256-RTRe2GZz5B9QEYF04PiKtKJkWu0Em5WBqK4dVQVHK0g=";
+      hash = "sha256-E125YYwVzLzbPh0bbz/FzJO+JysjBhKfpLKmMRO9nJc=";
     };
     pkg = fetchsvn {
       url = "https://josm.openstreetmap.de/svn/trunk/native/linux/tested";

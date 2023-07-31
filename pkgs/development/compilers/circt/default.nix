@@ -13,12 +13,12 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "circt";
-  version = "1.37.0";
+  version = "1.45.0";
   src = fetchFromGitHub {
     owner = "llvm";
     repo = "circt";
     rev = "firtool-${version}";
-    sha256 = "sha256-jagI5pXH3+4K0cvRfFMFqcRe/FWFCunrckPFAQL7mPo=";
+    sha256 = "sha256-yzXYiqRIwV3bkMfvmduow3QWJASXhOspM8CHZPN2/uE=";
     fetchSubmodules = true;
   };
 
@@ -53,7 +53,7 @@ stdenv.mkDerivation rec {
   LIT_FILTER_OUT = if stdenv.cc.isClang then "CIRCT :: Target/ExportSystemC/.*\.mlir" else null;
 
   preConfigure = ''
-    substituteInPlace test/circt-reduce/test/annotation-remover.mlir --replace "/usr/bin/env" "${coreutils}/bin/env"
+    find ./test -name '*.mlir' -exec sed -i 's|/usr/bin/env|${coreutils}/bin/env|g' {} \;
   '';
 
   installPhase = ''

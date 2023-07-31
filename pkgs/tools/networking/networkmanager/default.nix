@@ -4,7 +4,6 @@
 , substituteAll
 , gettext
 , pkg-config
-, fetchpatch
 , dbus
 , gnome
 , systemd
@@ -58,11 +57,11 @@ let
 in
 stdenv.mkDerivation rec {
   pname = "networkmanager";
-  version = "1.42.6";
+  version = "1.42.8";
 
   src = fetchurl {
     url = "mirror://gnome/sources/NetworkManager/${lib.versions.majorMinor version}/NetworkManager-${version}.tar.xz";
-    sha256 = "sha256-jDiKw3daxrzrYF+uIb4sPiYcr+YGeZSonw36RhDtAnk=";
+    sha256 = "sha256-AzfnWD0uxa3iui6MYl0vCe7M2h0ig27imqcpJdOZw1M=";
   };
 
   outputs = [ "out" "dev" "devdoc" "man" "doc" ];

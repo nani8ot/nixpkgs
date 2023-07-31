@@ -16,15 +16,14 @@
 , stdenv
 , fetchFromGitea
 , buildNpmPackage
-, writeShellApplication
 }:
 
 let
-  frontend = buildNpmPackage rec {
+  frontend = buildNpmPackage {
     pname = "forgejo-frontend";
     inherit (forgejo) src version;
 
-    npmDepsHash = "sha256-dB/uBuS0kgaTwsPYnqklT450ejLHcPAqBdDs3JT8Uxg=";
+    npmDepsHash = "sha256-YZzVw+WWqTmJafqnZ5vrzb7P6V4DTMNQwW1/+wvZEM8=";
 
     patches = [
       ./package-json-npm-build-frontend.patch
@@ -39,17 +38,17 @@ let
 in
 buildGoModule rec {
   pname = "forgejo";
-  version = "1.19.1-0";
+  version = "1.20.1-0";
 
   src = fetchFromGitea {
     domain = "codeberg.org";
     owner = "forgejo";
     repo = "forgejo";
     rev = "v${version}";
-    hash = "sha256-0FmqLxQvr3bbgdzKFeAhRMvJp/xdRPW40WLH6eKNY9s=";
+    hash = "sha256-3L43hm6Tx4h5UHm3jGTGiOWBgAGx49zVGB0D6om6ayk=";
   };
 
-  vendorHash = "sha256-g8QJSewQFfyE/34A2JxrVnwk5vmiIRSbwrVE9LqYJrM=";
+  vendorHash = "sha256-n2fqqQ6jqHEAWLlaY9t6nd6Ty0viOuTwDWDhTECve+Q=";
 
   subPackages = [ "." ];
 
@@ -89,7 +88,7 @@ buildGoModule rec {
       --prefix PATH : ${lib.makeBinPath [ bash git gzip openssh ]}
   '';
 
-  # $data is not available in go-modules.drv and preBuild isn't needed
+  # $data is not available in goModules.drv and preBuild isn't needed
   overrideModAttrs = (_: {
     postPatch = null;
     preBuild = null;
@@ -111,12 +110,12 @@ buildGoModule rec {
     tests = nixosTests.forgejo;
   };
 
-  meta = with lib; {
+  meta = {
     description = "A self-hosted lightweight software forge";
     homepage = "https://forgejo.org";
-    changelog = "https://codeberg.org/forgejo/forgejo/releases/tag/v${version}";
-    license = licenses.mit;
-    maintainers = with maintainers; [ indeednotjames urandom ];
+    changelog = "https://codeberg.org/forgejo/forgejo/releases/tag/${src.rev}";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ emilylange urandom bendlas ];
     broken = stdenv.isDarwin;
     mainProgram = "gitea";
   };
