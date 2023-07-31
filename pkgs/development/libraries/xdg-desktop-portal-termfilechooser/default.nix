@@ -24,7 +24,7 @@ stdenv.mkDerivation rec {
     owner = "nani8ot";
     repo = pname;
     rev = "main";
-    sha256 = "sha256-loOV2Yn6MZyGGdZSYeH+q6k4ho2IzImaLp12MdGNaIU=";
+    sha256 = "sha256-4s3n5EONwmDhdMrs7NdCqM/IAcNXmmbuhv84btCredg=";
   };
 
   strictDeps = true;
