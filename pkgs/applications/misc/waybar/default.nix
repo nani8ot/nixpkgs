@@ -17,6 +17,7 @@
 , libinotify-kqueue
 , libxkbcommon
 , evdevSupport    ? true,  libevdev
+, hyprlandSupport ? false, hyprland
 , inputSupport    ? true,  libinput
 , jackSupport     ? true,  libjack2
 , mpdSupport      ? true,  libmpdclient
@@ -60,6 +61,7 @@ stdenv.mkDerivation rec {
     [ wayland wlroots gtkmm3 libsigcxx jsoncpp spdlog gtk-layer-shell howard-hinnant-date libxkbcommon ]
     ++ optional  (!stdenv.isLinux) libinotify-kqueue
     ++ optional  evdevSupport  libevdev
+    ++ optional  hyprlandSupport hyprland
     ++ optional  inputSupport  libinput
     ++ optional  jackSupport   libjack2
     ++ optional  mpdSupport    libmpdclient
@@ -111,8 +113,9 @@ stdenv.mkDerivation rec {
     changelog = "https://github.com/alexays/waybar/releases/tag/${version}";
     description = "Highly customizable Wayland bar for Sway and Wlroots based compositors";
     license = licenses.mit;
-    maintainers = with maintainers; [ FlorianFranzen minijackson synthetica lovesegfault rodrgz ];
+    maintainers = with maintainers; [ FlorianFranzen minijackson synthetica lovesegfault rodrgz jtbx ];
     platforms = platforms.unix;
     homepage = "https://github.com/alexays/waybar";
+    mainProgram = "waybar";
   };
 }
