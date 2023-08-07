@@ -9824,6 +9824,8 @@ with pkgs;
 
   mautrix-whatsapp = callPackage ../servers/mautrix-whatsapp { };
 
+  mautrix-discord = callPackage ../servers/mautrix-discord { };
+
   mcfly = callPackage ../tools/misc/mcfly { };
 
   m2r = with python3Packages; toPythonApplication m2r;
