@@ -1,12 +1,22 @@
-{ lib, stdenv, fetchurl, mono, libmediainfo, sqlite, curl, makeWrapper, nixosTests }:
+{ lib, stdenv, fetchurl, mono, libmediainfo, sqlite, curl, makeWrapper, icu, dotnet-runtime, openssl, nixosTests, zlib }:
 
-stdenv.mkDerivation rec {
+let
+  os = if stdenv.isDarwin then "osx" else "linux";
+  arch = {
+    x86_64-linux = "x64";
+  }."${stdenv.hostPlatform.system}" or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
+
+  hash = {
+    x64-linux_hash = "sha256-WWHND/Dd8dPV9v/Aj1YaEY124SP0SOxexPzEfxibOvk=";
+  }."${arch}-${os}_hash";
+
+in stdenv.mkDerivation rec {
   pname = "sonarr";
-  version = "3.0.10.1567";
+  version = "4.0.0.669";
 
   src = fetchurl {
-    url = "https://download.sonarr.tv/v3/main/${version}/Sonarr.main.${version}.linux.tar.gz";
-    hash = "sha256-6zdp/Bg+9pcrElW5neB+BC16Vn1VhTjhMRRIxGrKhxc=";
+    url = "https://download.sonarr.tv/v4/develop/${version}/Sonarr.develop.${version}.linux-x64.tar.gz";
+    sha256 = hash;
   };
 
   nativeBuildInputs = [ makeWrapper ];
@@ -14,12 +24,13 @@ stdenv.mkDerivation rec {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out/bin
-    cp -r * $out/bin/
-    makeWrapper "${mono}/bin/mono" $out/bin/NzbDrone \
-      --add-flags "$out/bin/Sonarr.exe" \
+    mkdir -p $out/{bin,share/${pname}-${version}}
+    cp -r * $out/share/${pname}-${version}/.
+
+    makeWrapper "${dotnet-runtime}/bin/dotnet" $out/bin/Sonarr \
+      --add-flags "$out/share/${pname}-${version}/Sonarr.dll" \
       --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [
-          curl sqlite libmediainfo ]}
+        curl sqlite libmediainfo mono openssl icu zlib ]}
 
     runHook postInstall
   '';
@@ -29,11 +40,12 @@ stdenv.mkDerivation rec {
     tests.smoke-test = nixosTests.sonarr;
   };
 
-  meta = {
-    description = "Smart PVR for newsgroup and bittorrent users";
+  meta = with lib; {
+    description = "A Usenet/BitTorrent tv downloader";
     homepage = "https://sonarr.tv/";
-    license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [ fadenb purcell ];
-    platforms = lib.platforms.all;
+    changelog = "https://github.com/Sonarr/Sonarr/releases/tag/v${version}";
+    license = licenses.gpl3Only;
+    maintainers = with maintainers; [ edwtjo purcell nani8ot ];
+    platforms = [ "x86_64-linux" ];
   };
 }

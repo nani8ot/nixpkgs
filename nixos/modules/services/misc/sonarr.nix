@@ -61,7 +61,7 @@ in
         Type = "simple";
         User = cfg.user;
         Group = cfg.group;
-        ExecStart = "${cfg.package}/bin/NzbDrone -nobrowser -data='${cfg.dataDir}'";
+        ExecStart = "${cfg.package}/bin/Sonarr -nobrowser -data=${cfg.dataDir}";
         Restart = "on-failure";
       };
     };
