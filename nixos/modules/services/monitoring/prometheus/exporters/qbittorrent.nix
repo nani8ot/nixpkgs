@@ -6,6 +6,7 @@ let
     mkOption
     types
     boolToString
+    ;
 in
 {
   port = 8090;
