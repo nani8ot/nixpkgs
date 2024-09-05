@@ -2,26 +2,34 @@
 
 let
   cfg = config.services.prometheus.exporters.qbittorrent;
-  inherit (lib)
-    mkOption
-    types
-    boolToString
-    optionalAttrs
-    ;
+  qbittorrentExporterEnvironment = (
+    lib.mapAttrs (_: toString) cfg.environment
+  ) // {
+    EXPORTER_PORT = toString cfg.port;
+    URL = cfg.url;
+  };
 in
 {
   port = 8090;
   extraOpts = {
-    url = mkOption {
-      type = types.str;
+    url = lib.mkOption {
+      type = lib.types.str;
       default = "http://127.0.0.1";
       description = ''
         The qBittorrent base URL.
       '';
     };
 
-    environmentFile = mkOption {
-      type = types.nullOr types.path;
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      description = ''
+        See [the configuration guide](https://github.com/martabal/qbittorrent-exporter?tab=readme-ov-file#environment-variables) for available options.
+      '';
+    };
+
+    environmentFile = lib.mkOption {
+      type = with lib.types; nullOr path;
       default = null;
       example = "/etc/secrets/prometheus-qbittorrent-exporter.env";
       description = ''
@@ -32,44 +40,13 @@ in
         See [the configuration guide](https://github.com/martabal/qbittorrent-exporter?tab=readme-ov-file#environment-variables) for available options.
       '';
     };
-
-    disableTracker = mkOption {
-      type = types.bool;
-      default = false;
-      description = ''
-        Get tracker infos (needs an API request for each tracker).
-      '';
-    };
-
-    timeout = mkOption {
-      type = types.int;
-      default = 30;
-      description = ''
-        Duration before ending a request to qBittorrent.
-      '';
-    };
-
-#    extraEnv = mkOption {
-#      type = types.attrsOf types.str;
-#      default = {};
-#      description = ''
-#        Extra environment variables for the exporter.
-#      '';
-#    };
   };
   serviceOpts = {
     serviceConfig = {
       ExecStart = ''${pkgs.prometheus-qbittorrent-exporter}/bin/qbit-exp "$@"'';
-      environment = {
-        EXPORTER_PORT = toString cfg.port;
-        QBITTORRENT_BASE_URL = cfg.url;
-        QBITTORRENT_USERNAME = cfg.username;
-        QBITTORRENT_TIMEOUT = toString cfg.timeout;
-        DISABLE_TRACKER = boolToString cfg.disableTracker;
-      };
-      #} // cfg.extraEnv;
     } // optionalAttrs (cfg.environmentFile != null) {
       EnvironmentFile = cfg.environmentFile;
     };
+    environment = qbittorrentExporterEnvironment;
   };
 }
