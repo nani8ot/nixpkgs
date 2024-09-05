@@ -44,7 +44,7 @@ in
   serviceOpts = {
     serviceConfig = {
       ExecStart = ''${pkgs.prometheus-qbittorrent-exporter}/bin/qbit-exp "$@"'';
-    } // optionalAttrs (cfg.environmentFile != null) {
+    } // lib.optionalAttrs (cfg.environmentFile != null) {
       EnvironmentFile = cfg.environmentFile;
     };
     environment = qbittorrentExporterEnvironment;
