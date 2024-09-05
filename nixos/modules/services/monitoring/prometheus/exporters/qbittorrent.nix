@@ -45,8 +45,8 @@ in
     serviceConfig = {
       ExecStart = ''${pkgs.prometheus-qbittorrent-exporter}/bin/qbit-exp "$@"'';
 #      SystemCallFilter = ["@system-service" "~@privileged"];
+      EnvironmentFile = cfg.environmentFile;
     };
     environment = qbittorrentExporterEnvironment;
-    environmentFile = cfg.environmentFile;
   };
 }
