@@ -42,9 +42,9 @@ in
 
       timeout = mkOption {
         type = types.int;
-        default = false;
+        default = 30;
         description = ''
-          Get tracker infos (needs an API request for each tracker)
+          Duration before ending a request to qBittorrent.
         '';
       };
 
