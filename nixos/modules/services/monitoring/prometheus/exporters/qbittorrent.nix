@@ -47,6 +47,6 @@ in
 #      SystemCallFilter = ["@system-service" "~@privileged"];
     };
     environment = qbittorrentExporterEnvironment;
-    environmentFile = cfg.environmentFile;
+    #environmentFile = cfg.environmentFile;
   };
 }
