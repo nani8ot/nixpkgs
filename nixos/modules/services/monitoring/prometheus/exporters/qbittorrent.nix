@@ -31,6 +31,7 @@ in
 
         See [the configuration guide](https://github.com/martabal/qbittorrent-exporter?tab=readme-ov-file#environment-variables) for available options.
       '';
+      };
 
       disableTracker = mkOption {
         type = types.bool;
