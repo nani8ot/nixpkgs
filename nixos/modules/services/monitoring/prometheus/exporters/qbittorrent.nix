@@ -29,7 +29,7 @@ in
     };
 
     environmentFile = lib.mkOption {
-      type = with lib.types; nullOr path;
+      type = lib.types.nullOr lib.types.path;
       default = null;
       example = "/etc/secrets/prometheus-qbittorrent-exporter.env";
       description = ''
