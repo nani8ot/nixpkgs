@@ -32,7 +32,7 @@ in
   };
   serviceOpts = {
     serviceConfig = {
-      ExecStart = ''${prometheus-qbittorrent-exporter}/bin/qbit-exp "$@"'';
+      ExecStart = ''${pkgs.prometheus-qbittorrent-exporter}/bin/qbit-exp "$@"'';
 #      ProcSubset = "pid";
 #      ProtectProc = "invisible";
 #      SystemCallFilter = ["@system-service" "~@privileged"];
