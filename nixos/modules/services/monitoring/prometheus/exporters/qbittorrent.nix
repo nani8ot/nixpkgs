@@ -6,6 +6,7 @@ let
     mkOption
     types
     boolToString
+    optionalAttrs
     ;
 in
 {
