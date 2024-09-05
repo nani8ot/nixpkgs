@@ -2,7 +2,12 @@
 
 let
   cfg = config.services.prometheus.exporters.qbittorrent;
-  inherit (lib) mkOption types boolToString optionalAttrs;
+  qbittorrentExporterEnvironment = (
+    lib.mapAttrs (_: toString) cfg.environment
+  ) // {
+    EXPORTER_PORT = toString cfg.port;
+    URL = cfg.url;
+  };
 in
 {
   port = 8090;
@@ -19,10 +24,6 @@ in
       type = lib.types.attrsOf lib.types.str;
       default = { };
       description = ''
-        Path to the service's environment file. This path can either be a computed path in /nix/store or a path in the local filesystem.
-
-        The environment file should NOT be stored in /nix/store as it contains passwords and/or keys in plain text.
-
         See [the configuration guide](https://github.com/martabal/qbittorrent-exporter?tab=readme-ov-file#environment-variables) for available options.
       '';
     };
