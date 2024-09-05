@@ -71,6 +71,7 @@ let
     "postgres"
     "process"
     "pve"
+    "qbittorrent"
     "py-air-control"
     "redis"
     "restic"
