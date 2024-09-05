@@ -1,4 +1,4 @@
-{ config, lib, pkgs, options, type, ... }:
+{ config, lib, pkgs, options, ... }:
 
 let
   cfg = config.services.prometheus.exporters.qbittorrent;
