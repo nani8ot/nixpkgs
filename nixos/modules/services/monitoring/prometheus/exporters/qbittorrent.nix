@@ -31,32 +31,30 @@ in
 
         See [the configuration guide](https://github.com/martabal/qbittorrent-exporter?tab=readme-ov-file#environment-variables) for available options.
       '';
-      };
+    };
 
-      disableTracker = mkOption {
-        type = types.bool;
-        default = false;
-        description = ''
-          Get tracker infos (needs an API request for each tracker).
-        '';
-      };
+    disableTracker = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Get tracker infos (needs an API request for each tracker).
+      '';
+    };
 
-      timeout = mkOption {
-        type = types.int;
-        default = 30;
-        description = ''
-          Duration before ending a request to qBittorrent.
-        '';
-      };
+    timeout = mkOption {
+      type = types.int;
+      default = 30;
+      description = ''
+        Duration before ending a request to qBittorrent.
+      '';
+    };
 
-      extraEnv = mkOption {
-        type = types.attrsOf types.str;
-        default = {};
-        description = ''
-          Extra environment variables for the exporter.
-        '';
-      };
-
+    extraEnv = mkOption {
+      type = types.attrsOf types.str;
+      default = {};
+      description = ''
+        Extra environment variables for the exporter.
+      '';
     };
   };
   serviceOpts = {
