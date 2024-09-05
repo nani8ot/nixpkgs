@@ -4,6 +4,7 @@
 , autoPatchelfHook
 , dpkg
 , makeWrapper
+, wrapGAppsHook3
 , alsa-lib
 , at-spi2-atk
 , at-spi2-core
@@ -32,18 +33,19 @@
 , systemd
 , xdg-utils
 , xorg
+, libGL
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "tidal-hifi";
-  version = "5.3.0";
+  version = "5.16.0";
 
   src = fetchurl {
-    url = "https://github.com/Mastermindzh/tidal-hifi/releases/download/${version}/tidal-hifi_${version}_amd64.deb";
-    sha256 = "sha256-YGSHEvanWek6qiWvKs6g+HneGbuuqJn/DBfhawjQi5M=";
+    url = "https://github.com/Mastermindzh/tidal-hifi/releases/download/${finalAttrs.version}/tidal-hifi_${finalAttrs.version}_amd64.deb";
+    sha256 = "sha256-gDinm7kILm4SKlWmaJ1grwRuketGs/aWlJfNEF+AIRo=";
   };
 
-  nativeBuildInputs = [ autoPatchelfHook dpkg makeWrapper ];
+  nativeBuildInputs = [ autoPatchelfHook dpkg makeWrapper wrapGAppsHook3 ];
 
   buildInputs = [
     alsa-lib
@@ -84,6 +86,7 @@ stdenv.mkDerivation rec {
     xorg.libXScrnSaver
     xorg.libxshmfence
     xorg.libXtst
+    libGL
   ];
 
   runtimeDependencies =
@@ -104,18 +107,20 @@ stdenv.mkDerivation rec {
 
   postFixup = ''
     makeWrapper $out/opt/tidal-hifi/tidal-hifi $out/bin/tidal-hifi \
-      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath buildInputs}" \
+      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath finalAttrs.buildInputs}" \
+      --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations}}" \
       "''${gappsWrapperArgs[@]}"
     substituteInPlace $out/share/applications/tidal-hifi.desktop \
       --replace "/opt/tidal-hifi/tidal-hifi" "tidal-hifi"
   '';
 
-  meta = with lib; {
-    description = "The web version of Tidal running in electron with hifi support thanks to widevine";
+  meta = {
+    changelog = "https://github.com/Mastermindzh/tidal-hifi/releases/tag/${finalAttrs.version}";
+    description = "Web version of Tidal running in electron with hifi support thanks to widevine";
     homepage = "https://github.com/Mastermindzh/tidal-hifi";
-    changelog = "https://github.com/Mastermindzh/tidal-hifi/releases/tag/${version}";
-    license = licenses.mit;
-    maintainers = with maintainers; [ qbit ];
-    platforms = [ "x86_64-linux" ];
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ qbit spikespaz ];
+    platforms = lib.platforms.linux;
+    mainProgram = "tidal-hifi";
   };
-}
+})

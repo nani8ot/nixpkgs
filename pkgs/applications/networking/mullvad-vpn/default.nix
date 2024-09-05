@@ -64,7 +64,7 @@ let
     systemd
   ];
 
-  version = "2023.4";
+  version = "2024.4";
 
   selectSystem = attrs: attrs.${stdenv.hostPlatform.system} or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
 
@@ -74,8 +74,8 @@ let
   };
 
   hash = selectSystem {
-    x86_64-linux = "sha256-7NoifrX1/3pUJHTYK+2dVos/oFsKiYwyhCGi07SsEhM=";
-    aarch64-linux = "sha256-e0lp+SpBUmtYBcJPvql8ALeCkVtneZ1Cd3IFMVX6R2Q=";
+    x86_64-linux = "sha256-bsXlOzqGr37AZhEij68Fy2/3Lk50J7A3jHV0re5U6j0=";
+    aarch64-linux = "sha256-6OBCqOnSkXBntFGxXicPU7GSb9+a5WN4rYExgDa08/I=";
   };
 in
 
@@ -121,6 +121,9 @@ stdenv.mkDerivation {
 
     wrapProgram $out/bin/mullvad-daemon \
         --set-default MULLVAD_RESOURCE_DIR "$out/share/mullvad/resources"
+
+    wrapProgram $out/bin/mullvad-gui \
+      --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--enable-features=UseOzonePlatform --ozone-platform=wayland}}"
 
     sed -i "s|Exec.*$|Exec=$out/bin/mullvad-vpn $U|" $out/share/applications/mullvad-vpn.desktop
 

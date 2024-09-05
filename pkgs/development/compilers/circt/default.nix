@@ -6,35 +6,38 @@
 , git
 , fetchFromGitHub
 , ninja
+, lit
+, z3
+, gitUpdater
+, callPackage
 }:
 
 let
   pythonEnv = python3.withPackages (ps: [ ps.psutil ]);
+  circt-llvm = callPackage ./circt-llvm.nix { };
 in
 stdenv.mkDerivation rec {
   pname = "circt";
-  version = "1.49.0";
+  version = "1.84.0";
   src = fetchFromGitHub {
     owner = "llvm";
     repo = "circt";
     rev = "firtool-${version}";
-    sha256 = "sha256-pHMysxnczKilfjJafobU18/gaWnfrHMpPUd6RQ+CXSg=";
+    hash = "sha256-9GOn0wnFQ9JidLf5qpz2xG0lf+cCqKMvZnAy4JDCFu4=";
     fetchSubmodules = true;
   };
 
   requiredSystemFeatures = [ "big-parallel" ];
 
-  nativeBuildInputs = [ cmake ninja git pythonEnv ];
+  nativeBuildInputs = [ cmake ninja git pythonEnv z3 ];
+  buildInputs = [ circt-llvm ];
 
-  cmakeDir = "../llvm/llvm";
   cmakeFlags = [
-    "-DLLVM_ENABLE_BINDINGS=OFF"
-    "-DLLVM_ENABLE_OCAMLDOC=OFF"
-    "-DLLVM_BUILD_EXAMPLES=OFF"
-    "-DLLVM_OPTIMIZED_TABLEGEN=ON"
-    "-DLLVM_ENABLE_PROJECTS=mlir"
-    "-DLLVM_EXTERNAL_PROJECTS=circt"
-    "-DLLVM_EXTERNAL_CIRCT_SOURCE_DIR=.."
+    "-DBUILD_SHARED_LIBS=ON"
+    "-DMLIR_DIR=${circt-llvm.dev}/lib/cmake/mlir"
+
+    # LLVM_EXTERNAL_LIT is executed by python3, the wrapped bash script will not work
+    "-DLLVM_EXTERNAL_LIT=${lit}/bin/.lit-wrapped"
     "-DCIRCT_LLHD_SIM_ENABLED=OFF"
   ];
 
@@ -59,22 +62,34 @@ stdenv.mkDerivation rec {
     substituteInPlace cmake/modules/GenVersionFile.cmake --replace "unknown git version" "${src.rev}"
   '';
 
-  installPhase = ''
-    runHook preInstall
-    mkdir -p $out/bin
-    mv bin/{{fir,hls}tool,circt-{as,dis,lsp-server,opt,reduce,translate}} $out/bin
-    runHook postInstall
-  '';
-
   doCheck = true;
   checkTarget = "check-circt check-circt-integration";
+
+  outputs = [ "out" "lib" "dev" ];
+
+  # Copy circt-llvm's postFixup stage so that it can make all our dylib references
+  # absolute as well.
+  #
+  # We don't need `postPatch` because circt seems to be automatically inheriting
+  # the config somehow, presumably via. `-DMLIR_DIR`.
+  postFixup = circt-llvm.postFixup;
+
+  postInstall = ''
+    moveToOutput lib "$lib"
+  '';
+
+  passthru = {
+    updateScript = gitUpdater {
+      rev-prefix = "firtool-";
+    };
+    llvm = circt-llvm;
+  };
 
   meta = {
     description = "Circuit IR compilers and tools";
     homepage = "https://circt.org/";
     license = lib.licenses.asl20;
-    maintainers = with lib.maintainers; [ sharzy ];
+    maintainers = with lib.maintainers; [ sharzy pineapplehunter sequencer ];
     platforms = lib.platforms.all;
   };
 }
-

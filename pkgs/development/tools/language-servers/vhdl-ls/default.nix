@@ -5,25 +5,18 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "vhdl-ls";
-  version = "0.65.0";
+  version = "0.83.0";
 
   src = fetchFromGitHub {
     owner = "VHDL-LS";
     repo = "rust_hdl";
     rev = "v${version}";
-    hash = "sha256-B+jzTrV5Kk4VOgr+5l0F5+cXzfb0aErKaiH50vIdLq4=";
+    hash = "sha256-WLk8EHzpqUPhrmnRK6mP/4MDfSinytgVDZWi1/OfkyU=";
   };
 
-  # No Cargo.lock upstream, see:
-  # https://github.com/VHDL-LS/rust_hdl/issues/166
-  cargoLock = {
-    lockFile = ./Cargo.lock;
-  };
+  cargoHash = "sha256-QkD1dEEphYP0eL4qPe+TAv1ATyVcw5rSPiiIkk21Dms=";
+
   postPatch = ''
-    ln -s ${./Cargo.lock} Cargo.lock
-  ''
-  # Also make it look up vhdl_libraries in an expected location
-  + ''
     substituteInPlace vhdl_lang/src/config.rs \
       --replace /usr/lib $out/lib
   '';
@@ -34,7 +27,7 @@ rustPlatform.buildRustPackage rec {
   '';
 
   meta = {
-    description = "A fast VHDL language server";
+    description = "Fast VHDL language server";
     homepage = "https://github.com/VHDL-LS/rust_hdl";
     license = lib.licenses.mpl20;
     mainProgram = "vhdl_ls";

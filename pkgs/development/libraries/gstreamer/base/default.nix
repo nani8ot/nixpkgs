@@ -24,7 +24,9 @@
 , libXext
 , libXi
 , libXv
+, libdrm
 , enableWayland ? stdenv.isLinux
+, wayland-scanner
 , wayland
 , wayland-protocols
 , enableAlsa ? stdenv.isLinux
@@ -45,15 +47,17 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "gst-plugins-base";
-  version = "1.22.4";
+  version = "1.24.3";
 
   outputs = [ "out" "dev" ];
+
+  separateDebugInfo = true;
 
   src = let
     inherit (finalAttrs) pname version;
   in fetchurl {
     url = "https://gstreamer.freedesktop.org/src/${pname}/${pname}-${version}.tar.xz";
-    hash = "sha256-KSQk6C3qFwUoxCtFb2KolTK8q8BQjxkuNGcvuG9o5bg=";
+    hash = "sha256-8QlDl+qnky8G5X67sHWqM6osduS3VjChawLI1K9Ggy4=";
   };
 
   strictDeps = true;
@@ -73,11 +77,10 @@ stdenv.mkDerivation (finalAttrs: {
   ] ++ lib.optionals enableDocumentation [
     hotdoc
   ] ++ lib.optionals enableWayland [
-    wayland
+    wayland-scanner
   ];
 
   buildInputs = [
-    gobject-introspection
     graphene
     orc
     libtheora
@@ -89,6 +92,7 @@ stdenv.mkDerivation (finalAttrs: {
     tremor
     pango
   ] ++ lib.optionals (!stdenv.isDarwin) [
+    libdrm
     libGL
     libvisual
   ] ++ lib.optionals stdenv.isDarwin [
@@ -107,6 +111,8 @@ stdenv.mkDerivation (finalAttrs: {
 
   propagatedBuildInputs = [
     gstreamer
+  ] ++ lib.optionals (!stdenv.isDarwin) [
+    libdrm
   ];
 
   mesonFlags = [
@@ -123,6 +129,7 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optional (!enableAlsa) "-Dalsa=disabled"
   ++ lib.optional (!enableCdparanoia) "-Dcdparanoia=disabled"
   ++ lib.optionals stdenv.isDarwin [
+    "-Ddrm=disabled"
     "-Dlibvisual=disabled"
   ];
 
@@ -168,6 +175,6 @@ stdenv.mkDerivation (finalAttrs: {
       "gstreamer-video-1.0"
     ];
     platforms = platforms.unix;
-    maintainers = with maintainers; [ matthewbauer lilyinstarlight ];
+    maintainers = with maintainers; [ matthewbauer ];
   };
 })

@@ -1,45 +1,46 @@
-{ lib
-, buildPythonPackage
-, click
-, fetchFromGitHub
-, pytest-asyncio
-, pytest-timeout
-, pytestCheckHook
-, pythonOlder
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  poetry-core,
+  pytest-asyncio,
+  pytest-cov-stub,
+  pytest-timeout,
+  pytestCheckHook,
+  pythonOlder,
+  rich,
+  typer,
 }:
 
 buildPythonPackage rec {
   pname = "aiovlc";
-  version = "0.3.0";
-  format = "setuptools";
+  version = "0.4.3";
+  pyproject = true;
 
   disabled = pythonOlder "3.9";
 
   src = fetchFromGitHub {
     owner = "MartinHjelmare";
-    repo = pname;
+    repo = "aiovlc";
     rev = "refs/tags/v${version}";
-    hash = "sha256-ZFLNgPxR5N+hI988POCYJD9QGivs1fYysyFtmxsJQaA=";
+    hash = "sha256-kiF2BRqaQLNpd+EoKrI9/9m3E1DlyJqM3Ng0qA0TfyQ=";
   };
 
-  postPatch = ''
-    substituteInPlace pyproject.toml --replace \
-      " --cov=aiovlc --cov-report=term-missing:skip-covered" ""
-  '';
+  build-system = [ poetry-core ];
 
-  propagatedBuildInputs = [
-    click
+  dependencies = [
+    rich
+    typer
   ];
 
   nativeCheckInputs = [
     pytest-asyncio
+    pytest-cov-stub
     pytest-timeout
     pytestCheckHook
   ];
 
-  pythonImportsCheck = [
-    "aiovlc"
-  ];
+  pythonImportsCheck = [ "aiovlc" ];
 
   meta = with lib; {
     description = "Python module to control VLC";

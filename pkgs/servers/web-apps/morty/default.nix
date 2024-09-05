@@ -1,4 +1,4 @@
-{ lib, buildGoModule, fetchFromGitHub }:
+{ lib, buildGoModule, fetchFromGitHub, nixosTests }:
 
 buildGoModule {
   pname = "morty";
@@ -11,10 +11,13 @@ buildGoModule {
     sha256 = "sha256-ik2VAPdxllt76UVFt77c1ltxIwFNahAKjn3FuErNFYo=";
   };
 
-  vendorSha256 = "sha256-3sllcoTDYQBAyAT7e9KeKNrlTEbgnoZc0Vt0ksQByvo=";
+  vendorHash = "sha256-3sllcoTDYQBAyAT7e9KeKNrlTEbgnoZc0Vt0ksQByvo=";
+
+  passthru.tests = { inherit (nixosTests) morty; };
 
   meta = with lib; {
     description = "Privacy aware web content sanitizer proxy as a service";
+    mainProgram = "morty";
     longDescription = ''
       Morty rewrites web pages to exclude malicious HTML tags and attributes.
       It also replaces external resource references to prevent third party information leaks.
@@ -23,6 +26,6 @@ buildGoModule {
     '';
     homepage = "https://github.com/asciimoo/morty";
     maintainers = with maintainers; [ leenaars SuperSandro2000 ];
-    license = licenses.agpl3;
+    license = licenses.agpl3Only;
   };
 }

@@ -1,29 +1,39 @@
-{ lib, buildGoModule, fetchFromGitHub }:
+{
+  lib,
+  rustPlatform,
+  fetchFromGitHub,
+}:
 
-buildGoModule rec {
+rustPlatform.buildRustPackage rec {
   pname = "viddy";
-  version = "0.3.6";
+  version = "1.1.0";
 
   src = fetchFromGitHub {
     owner = "sachaos";
-    repo = pname;
+    repo = "viddy";
     rev = "v${version}";
-    sha256 = "sha256-AcRfKu6P7b/HsuC6DTezbYLI9rQZwjklH/bs7mKITUk=";
+    hash = "sha256-dsvPNMNT1CXB6Wgq438wRHt9og+4uFWgiWPore4mRE0=";
   };
 
-  vendorSha256 = "sha256-QxYM4N3E/BqmeNaofLR1crwFLVaF3IigDXKlKA2Bkuw=";
+  cargoHash = "sha256-18OEOV8kET+UcLd15YultkonbXBEY/AwBHFNw4YTAPk=";
 
-  ldflags = [
-    "-s"
-    "-w"
-    "-X"
-    "main.version=${version}"
-  ];
+  # requires nightly features
+  env.RUSTC_BOOTSTRAP = 1;
+
+  env.VERGEN_BUILD_DATE = "2024-09-01"; # managed via the update script
+  env.VERGEN_GIT_DESCRIBE = "Nixpkgs";
+
+  passthru.updateScript.command = [ ./update.sh ];
 
   meta = with lib; {
-    description = "A modern watch command";
+    description = "Modern watch command, time machine and pager etc.";
+    changelog = "https://github.com/sachaos/viddy/releases";
     homepage = "https://github.com/sachaos/viddy";
     license = licenses.mit;
-    maintainers = with maintainers; [ j-hui ];
+    maintainers = with maintainers; [
+      j-hui
+      phanirithvij
+    ];
+    mainProgram = "viddy";
   };
 }

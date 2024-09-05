@@ -1,17 +1,18 @@
 { lib, stdenv, fetchurl, pkg-config, gnutls, liburcu, lmdb, libcap_ng, libidn2, libunistring
 , systemd, nettle, libedit, zlib, libiconv, libintl, libmaxminddb, libbpf, nghttp2, libmnl
 , ngtcp2-gnutls, xdp-tools
+, sphinx
 , autoreconfHook
 , nixosTests, knot-resolver, knot-dns, runCommandLocal
 }:
 
 stdenv.mkDerivation rec {
   pname = "knot-dns";
-  version = "3.2.9";
+  version = "3.4.0";
 
   src = fetchurl {
     url = "https://secure.nic.cz/files/knot-dns/knot-${version}.tar.xz";
-    sha256 = "bc1f9eb8c9f67f52805f3acfa2d0153190245fa145b007fafa9068d2da292506";
+    sha256 = "2730b11398944faa5151c51b0655cf26631090343c303597814f2a57df424736";
   };
 
   outputs = [ "bin" "out" "dev" ];
@@ -29,7 +30,8 @@ stdenv.mkDerivation rec {
     ./runtime-deps.patch
   ];
 
-  nativeBuildInputs = [ pkg-config autoreconfHook ];
+  # FIXME: sphinx is needed for now to get man-pages
+  nativeBuildInputs = [ pkg-config autoreconfHook sphinx ];
   buildInputs = [
     gnutls liburcu libidn2 libunistring
     nettle libedit
@@ -60,6 +62,7 @@ stdenv.mkDerivation rec {
     inherit knot-resolver;
   } // lib.optionalAttrs stdenv.isLinux {
     inherit (nixosTests) knot kea;
+    prometheus-exporter = nixosTests.prometheus-exporters.knot;
     # Some dependencies are very version-sensitive, so the might get dropped
     # or embedded after some update, even if the nixPackagers didn't intend to.
     # For non-linux I don't know a good replacement for `ldd`.

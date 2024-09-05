@@ -13,12 +13,12 @@ in
   ];
 
   options.virtualisation.vmware.guest = {
-    enable = mkEnableOption (lib.mdDoc "VMWare Guest Support");
+    enable = mkEnableOption "VMWare Guest Support";
     headless = mkOption {
       type = types.bool;
       default = !config.services.xserver.enable;
       defaultText = "!config.services.xserver.enable";
-      description = lib.mdDoc "Whether to disable X11-related features.";
+      description = "Whether to disable X11-related features.";
     };
   };
 
@@ -65,9 +65,9 @@ in
     environment.etc.vmware-tools.source = "${open-vm-tools}/etc/vmware-tools/*";
 
     services.xserver = mkIf (!cfg.headless) {
-      modules = [ xf86inputvmmouse ];
+      modules = lib.optionals pkgs.stdenv.hostPlatform.isx86 [ xf86inputvmmouse ];
 
-      config = ''
+      config = lib.optionalString (pkgs.stdenv.hostPlatform.isx86) ''
           Section "InputClass"
             Identifier "VMMouse"
             MatchDevicePath "/dev/input/event*"

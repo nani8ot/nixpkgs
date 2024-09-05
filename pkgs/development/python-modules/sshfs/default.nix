@@ -1,47 +1,65 @@
-{ lib
-, asyncssh
-, bcrypt
-, buildPythonPackage
-, fetchFromGitHub
-, fsspec
-, mock-ssh-server
-, pytest-asyncio
-, pytestCheckHook
-, setuptools-scm
+{
+  lib,
+  stdenv,
+  asyncssh,
+  bcrypt,
+  buildPythonPackage,
+  fetchFromGitHub,
+  fsspec,
+  importlib-metadata,
+  mock-ssh-server,
+  pytest-asyncio,
+  pytestCheckHook,
+  setuptools,
+  setuptools-scm,
 }:
 
 buildPythonPackage rec {
   pname = "sshfs";
-  version = "2023.7.0";
+  version = "2024.6.0";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "fsspec";
-    repo = pname;
+    repo = "sshfs";
     rev = "refs/tags/${version}";
-    hash = "sha256-XKBpB3ackquVKsdF8b/45Kaz5Y2ussOl0o0HkD+k9tM=";
+    hash = "sha256-8Vut/JDLmWrTys8aaIBRbaWlvGCg6edaXmMCFxjGhag=";
   };
 
-  SETUPTOOLS_SCM_PRETEND_VERSION = version;
-
-  nativeBuildInputs = [
+  build-system = [
+    setuptools
     setuptools-scm
   ];
 
-  propagatedBuildInputs = [
+  dependencies = [
     asyncssh
-    bcrypt
     fsspec
   ];
 
+  optional-dependencies = {
+    bcrypt = [ asyncssh ] ++ asyncssh.optional-dependencies.bcrypt;
+    fido2 = [ asyncssh ] ++ asyncssh.optional-dependencies.fido2;
+    gssapi = [ asyncssh ] ++ asyncssh.optional-dependencies.gssapi;
+    libnacl = [ asyncssh ] ++ asyncssh.optional-dependencies.libnacl;
+    pkcs11 = [ asyncssh ] ++ asyncssh.optional-dependencies.python-pkcs11;
+    pyopenssl = [ asyncssh ] ++ asyncssh.optional-dependencies.pyopenssl;
+  };
+
+  __darwinAllowLocalNetworking = true;
+
   nativeCheckInputs = [
+    importlib-metadata
     mock-ssh-server
     pytest-asyncio
     pytestCheckHook
   ];
 
-  pythonImportsCheck = [
-    "sshfs"
+  disabledTests = lib.optionals stdenv.isDarwin [
+    # test fails with sandbox enabled
+    "test_checksum"
   ];
+
+  pythonImportsCheck = [ "sshfs" ];
 
   meta = with lib; {
     description = "SSH/SFTP implementation for fsspec";

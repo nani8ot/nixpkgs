@@ -1,31 +1,48 @@
-{ lib
-, stdenv
-, fetchFromGitHub
-, rustPlatform
-, nix-gitignore
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  rustPlatform,
 }:
 
-rustPlatform.buildRustPackage rec {
+rustPlatform.buildRustPackage {
   pname = "nsncd";
-  version = "unstable-2022-11-14";
+  version = "1.4.1-unstable-2024-04-10";
 
   src = fetchFromGitHub {
-    owner = "nix-community";
+    owner = "twosigma";
     repo = "nsncd";
-    rev = "47e580f1db99603df6e212a2e62f18cc970cef40";
-    hash = "sha256-Nv3MYZcuYgD66BAGs3Tg37s086HAGsaDBFvELqQF3Tk=";
+    rev = "7605e330d5a313a8656e6fcaf1c10cd6b5cdd427";
+    hash = "sha256-Bd7qE9MP5coBCkr70TdoJfwYhQpdrn/zmN4KoARcaMI=";
   };
 
-  cargoSha256 = "sha256-c1L6nEUBHw1YegmoRrI3WU/bF80Nzbz13hsGlNyBR9o=";
+  cargoHash = "sha256-N7U9YsyGh8+fLT973GGZTmVXcdnWhpqkeYTxzJ0rzdo=";
+
+  # TOREMOVE when https://github.com/twosigma/nsncd/pull/119 gets merged.
+  cargoPatches = [ ./0001-cargo-bump.patch ];
+
+  # TOREMOVE when https://github.com/twosigma/nsncd/pull/119 gets merged.
+  RUSTFLAGS = "-A dead_code";
+
+  checkFlags = [
+    # Relies on the test environment to be able to resolve "localhost"
+    # on IPv4. That's not the case in the Nix sandbox somehow. Works
+    # when running cargo test impurely on a (NixOS|Debian) machine.
+    "--skip=ffi::test_gethostbyname2_r"
+  ];
 
   meta = with lib; {
-    description = "the name service non-caching daemon";
+    description = "Name service non-caching daemon";
+    mainProgram = "nsncd";
     longDescription = ''
       nsncd is a nscd-compatible daemon that proxies lookups, without caching.
     '';
     homepage = "https://github.com/twosigma/nsncd";
     license = licenses.asl20;
-    maintainers = with maintainers; [ flokli ninjatrappeur ];
+    maintainers = with maintainers; [
+      flokli
+      picnoir
+    ];
     # never built on aarch64-darwin, x86_64-darwin since first introduction in nixpkgs
     broken = stdenv.isDarwin;
   };

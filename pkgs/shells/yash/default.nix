@@ -1,20 +1,24 @@
-{ stdenv, lib, fetchurl, gettext, ncurses }:
+{ stdenv, lib, fetchFromGitHub, gettext, ncurses, asciidoc }:
 
 stdenv.mkDerivation rec {
   pname = "yash";
-  version = "2.54";
+  version = "2.57";
 
-  src = fetchurl {
-    url = "https://osdn.net/dl/yash/yash-${version}.tar.xz";
-    hash = "sha256-RKCsHM98Os7PvqAn2MDJMPE6goBlvjGAVc4RMBU5GDk=";
+  src = fetchFromGitHub {
+    owner = "magicant";
+    repo = pname;
+    rev = version;
+    hash = "sha256-TqQWbwNk2P2vETJ2294bd689WBry0xRdz7xz/NnMBrk=";
   };
 
   strictDeps = true;
-  buildInputs = [ gettext ncurses ];
+  nativeBuildInputs = [ asciidoc gettext ];
+  buildInputs = [ ncurses ] ++ lib.optionals stdenv.isDarwin [ gettext ];
 
   meta = with lib; {
     homepage = "https://yash.osdn.jp/index.html.en";
     description = "Yet another POSIX-compliant shell";
+    mainProgram = "yash";
     license = licenses.gpl2Plus;
     maintainers = with maintainers; [ qbit ];
     platforms = platforms.all;

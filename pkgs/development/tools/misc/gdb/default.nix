@@ -1,15 +1,16 @@
 { lib, stdenv, targetPackages
 
 # Build time
-, fetchurl, fetchpatch, pkg-config, perl, texinfo, setupDebugInfoDirs, buildPackages
+, fetchurl, pkg-config, perl, texinfo, setupDebugInfoDirs, buildPackages
 
 # Run time
-, ncurses, readline, gmp, mpfr, expat, libipt, zlib, zstd, dejagnu, sourceHighlight, libiconv
+, ncurses, readline, gmp, mpfr, expat, libipt, zlib, zstd, xz, dejagnu, sourceHighlight, libiconv
 
 , pythonSupport ? stdenv.hostPlatform == stdenv.buildPlatform && !stdenv.hostPlatform.isCygwin, python3 ? null
 , enableDebuginfod ? lib.meta.availableOn stdenv.hostPlatform elfutils, elfutils
 , guile ? null
 , hostCpuOnly ? false
+, enableSim ? false
 , safePaths ? [
    # $debugdir:$datadir/auto-load are whitelisted by default by GDB
    "$debugdir" "$datadir/auto-load"
@@ -29,11 +30,11 @@ assert pythonSupport -> python3 != null;
 
 stdenv.mkDerivation rec {
   pname = targetPrefix + basename + lib.optionalString hostCpuOnly "-host-cpu-only";
-  version = "13.2";
+  version = "15.1";
 
   src = fetchurl {
     url = "mirror://gnu/gdb/${basename}-${version}.tar.xz";
-    hash = "sha256-/Vvrt74YM6vbbgI8L0mKNUSYKB350FUj2JFbq+uJPwo=";
+    hash = "sha256-OCVOrNRXITS8qcWlqk1MpWTLvTDDadiB9zP7a5AzVPI=";
   };
 
   postPatch = lib.optionalString stdenv.isDarwin ''
@@ -54,7 +55,7 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ pkg-config texinfo perl setupDebugInfoDirs ];
 
-  buildInputs = [ ncurses readline gmp mpfr expat libipt zlib zstd guile sourceHighlight ]
+  buildInputs = [ ncurses readline gmp mpfr expat libipt zlib zstd xz guile sourceHighlight ]
     ++ lib.optional pythonSupport python3
     ++ lib.optional doCheck dejagnu
     ++ lib.optional enableDebuginfod (elfutils.override { enableDebuginfod = true; })
@@ -87,7 +88,7 @@ stdenv.mkDerivation rec {
   '';
   configureScript = "../configure";
 
-  configureFlags = with lib; [
+  configureFlags = [
     # Set the program prefix to the current targetPrefix.
     # This ensures that the prefix always conforms to
     # nixpkgs' expectations instead of relying on the build
@@ -113,7 +114,8 @@ stdenv.mkDerivation rec {
   ] ++ lib.optional (!pythonSupport) "--without-python"
     ++ lib.optional stdenv.hostPlatform.isMusl "--disable-nls"
     ++ lib.optional stdenv.hostPlatform.isStatic "--disable-inprocess-agent"
-    ++ lib.optional enableDebuginfod "--with-debuginfod=yes";
+    ++ lib.optional enableDebuginfod "--with-debuginfod=yes"
+    ++ lib.optional (!enableSim) "--disable-sim";
 
   postInstall =
     '' # Remove Info files already provided by Binutils and other packages.
@@ -137,8 +139,10 @@ stdenv.mkDerivation rec {
     '';
   };
 
-  meta = with lib; {
-    description = "The GNU Project debugger";
+  meta = {
+    mainProgram = "gdb";
+
+    description = "GNU Project debugger";
 
     longDescription = ''
       GDB, the GNU Project debugger, allows you to see what is going
@@ -150,8 +154,10 @@ stdenv.mkDerivation rec {
 
     license = lib.licenses.gpl3Plus;
 
-    # GDB upstream does not support ARM darwin
-    platforms = with platforms; linux ++ cygwin ++ ["x86_64-darwin"];
-    maintainers = with maintainers; [ pierron globin lsix ];
+    platforms = with lib.platforms; linux ++ cygwin ++ freebsd ++ darwin;
+    # upstream does not support targeting aarch64-darwin;
+    # see https://inbox.sourceware.org/gdb/3185c3b8-8a91-4beb-a5d5-9db6afb93713@Spark/
+    badPlatforms = lib.optionals (stdenv.targetPlatform.system == "aarch64-darwin") meta.platforms;
+    maintainers = with lib.maintainers; [ pierron globin lsix ];
   };
 }

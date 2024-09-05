@@ -11,6 +11,7 @@ let
     "bin-x86_64-efi/ipxe.efi" = null;
     "bin-x86_64-efi/ipxe.efirom" = null;
     "bin-x86_64-efi/ipxe.usb" = "ipxe-efi.usb";
+    "bin-x86_64-efi/snp.efi" = null;
   } // lib.optionalAttrs stdenv.hostPlatform.isx86 {
     "bin/ipxe.dsk" = null;
     "bin/ipxe.usb" = null;
@@ -21,16 +22,18 @@ let
     "bin-arm32-efi/ipxe.efi" = null;
     "bin-arm32-efi/ipxe.efirom" = null;
     "bin-arm32-efi/ipxe.usb" = "ipxe-efi.usb";
+    "bin-arm32-efi/snp.efi" = null;
   } // lib.optionalAttrs stdenv.isAarch64 {
     "bin-arm64-efi/ipxe.efi" = null;
     "bin-arm64-efi/ipxe.efirom" = null;
     "bin-arm64-efi/ipxe.usb" = "ipxe-efi.usb";
+    "bin-arm64-efi/snp.efi" = null;
   };
 in
 
 stdenv.mkDerivation rec {
   pname = "ipxe";
-  version = "unstable-2023-07-19";
+  version = "1.21.1-unstable-2024-08-15";
 
   nativeBuildInputs = [ gnu-efi mtools openssl perl xorriso xz ] ++ lib.optional stdenv.hostPlatform.isx86 syslinux;
   depsBuildBuild = [ buildPackages.stdenv.cc ];
@@ -40,8 +43,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "ipxe";
     repo = "ipxe";
-    rev = "c1834f323f4f6b9b46cd5895b1457a117381363f";
-    hash = "sha256-fJeDgm+OaItshWFliq08Y0BPDD2FCkezeEp7trqWNjA=";
+    rev = "950f6b5861d8d6b247b37e4e1401d26d8f908ee8";
+    hash = "sha256-Zf2ZblKUyKPo0YdzQFeCEAnYkvWDsmuTS9htvSybpXo=";
   };
 
   postPatch = lib.optionalString stdenv.hostPlatform.isAarch64 ''
@@ -98,13 +101,14 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  passthru.updateScript = unstableGitUpdater {};
+  passthru.updateScript = unstableGitUpdater {
+    tagPrefix = "v";
+  };
 
   meta = with lib;
     { description = "Network boot firmware";
       homepage = "https://ipxe.org/";
       license = licenses.gpl2Only;
-      maintainers = with maintainers; [ ehmry ];
       platforms = platforms.linux;
     };
 }

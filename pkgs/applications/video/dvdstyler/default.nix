@@ -7,7 +7,7 @@
 , docbook-xsl-nons
 , dvdauthor
 , dvdplusrwtools
-, ffmpeg_4
+, ffmpeg_7
 , flex
 , fontconfig
 , gettext
@@ -16,7 +16,7 @@
 , libexif
 , libjpeg
 , pkg-config
-, wrapGAppsHook
+, wrapGAppsHook3
 , wxGTK32
 , wxSVG
 , xine-ui
@@ -24,7 +24,6 @@
 , zip
 
 , dvdisasterSupport ? true, dvdisaster ? null
-, thumbnailSupport ? true, libgnomeui ? null
 , udevSupport ? true, udev ? null
 , dbusSupport ? true, dbus ? null
 }:
@@ -33,17 +32,12 @@ let
   inherit (lib) optionals makeBinPath;
 in stdenv.mkDerivation rec {
   pname = "dvdstyler";
-  version = "3.2.1";
+  version = "3.3b4";
 
   src = fetchurl {
-    url = "mirror://sourceforge/project/dvdstyler/dvdstyler/${version}/DVDStyler-${version}.tar.bz2";
-    sha256 = "sha256-C7M0hzn0yTCXRUuBTss6WPa6zo8DD0Fhmp/ur7R0dVg=";
+    url = "mirror://sourceforge/project/dvdstyler/dvdstyler-devel/${version}/DVDStyler-${version}.tar.bz2";
+    hash = "sha256-JCaKcE7jkTxT57KKePs8gmgQedoOcP5NEQ2FwIDS2Ho=";
   };
-
-  patches = [
-    # https://sourceforge.net/p/dvdstyler/DVDStyler/ci/679fa8dc6ac7657775eda9d7b0ed9da9d069aeec/
-    ./wxgtk32.patch
-  ];
 
   nativeBuildInputs = [
     bison
@@ -53,7 +47,7 @@ in stdenv.mkDerivation rec {
     gettext
     gobject-introspection
     pkg-config
-    wrapGAppsHook
+    wrapGAppsHook3
     xmlto
     zip
   ];
@@ -61,7 +55,7 @@ in stdenv.mkDerivation rec {
     cdrtools
     dvdauthor
     dvdplusrwtools
-    ffmpeg_4
+    ffmpeg_7
     fontconfig
     glib
     libexif
@@ -72,8 +66,7 @@ in stdenv.mkDerivation rec {
  ]
   ++ optionals dvdisasterSupport [ dvdisaster ]
   ++ optionals udevSupport [ udev ]
-  ++ optionals dbusSupport [ dbus ]
-  ++ optionals thumbnailSupport [ libgnomeui ];
+  ++ optionals dbusSupport [ dbus ];
 
   enableParallelBuilding = true;
 
@@ -93,7 +86,7 @@ in stdenv.mkDerivation rec {
 
   meta = with lib; {
     homepage = "https://www.dvdstyler.org/";
-    description = "A DVD authoring software";
+    description = "DVD authoring software";
     longDescription = ''
       DVDStyler is a cross-platform free DVD authoring application for the
       creation of professional-looking DVDs. It allows not only burning of video
@@ -128,5 +121,6 @@ in stdenv.mkDerivation rec {
     license = licenses.gpl2Plus;
     maintainers = with maintainers; [ AndersonTorres ];
     platforms = with platforms; linux;
+    mainProgram = "dvdstyler";
   };
 }

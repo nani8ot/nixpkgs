@@ -36,8 +36,22 @@ let
   # pkgs.vimPlugins.nvim-treesitter.withAllGrammars
   withPlugins =
     f: self.nvim-treesitter.overrideAttrs {
-      passthru.dependencies = map grammarToPlugin
-        (f (tree-sitter.builtGrammars // builtGrammars));
+      passthru.dependencies =
+        let
+          grammars = map grammarToPlugin
+            (f (tree-sitter.builtGrammars // builtGrammars));
+          copyGrammar = grammar:
+            let name = lib.last (lib.splitString "-" grammar.name); in
+            "ln -sf ${grammar}/parser/${name}.so $out/parser/${name}.so";
+        in
+        [
+          (runCommand "vimplugin-treesitter-grammars"
+            { meta.platforms = lib.platforms.all; }
+            ''
+              mkdir -p $out/parser
+              ${lib.concatMapStringsSep "\n" copyGrammar grammars}
+            '')
+        ];
     };
 
   withAllGrammars = withPlugins (_: allGrammars);
@@ -48,7 +62,7 @@ in
     rm -r parser
   '';
 
-  passthru = {
+  passthru = (super.nvim-treesitter.passthru or { }) // {
     inherit builtGrammars allGrammars grammarToPlugin withPlugins withAllGrammars;
 
     grammarPlugins = lib.mapAttrs (_: grammarToPlugin) generatedDerivations;

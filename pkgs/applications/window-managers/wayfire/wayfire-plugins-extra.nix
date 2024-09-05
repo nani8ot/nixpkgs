@@ -5,46 +5,55 @@
 , ninja
 , pkg-config
 , wayfire
+, wayland-scanner
 , wf-config
-, gtkmm3
-, gtk-layer-shell
+, libevdev
+, libinput
 , libxkbcommon
+, nlohmann_json
 , xcbutilwm
+, gtkmm3
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "wayfire-plugins-extra";
-  version = "0.7.5";
+  version = "0.9.0";
 
   src = fetchFromGitHub {
     owner = "WayfireWM";
     repo = "wayfire-plugins-extra";
     rev = "v${finalAttrs.version}";
-    fetchSubmodules = true;
-    hash = "sha256-hnsRwIrl0+pRKhRlrF/Wdlu6HkzLfYukGk4Hzx3wNeo=";
+    hash = "sha256-TukDomxqfrM45+C7azfO8jVaqk3E5irdphH8U5IYItg=";
   };
-
-  postPatch = ''
-    substituteInPlace metadata/meson.build \
-      --replace "wayfire.get_variable(pkgconfig: 'metadatadir')" "join_paths(get_option('prefix'), 'share/wayfire/metadata')"
-  '';
 
   nativeBuildInputs = [
     meson
     ninja
     pkg-config
+    wayland-scanner
   ];
 
   buildInputs = [
     wayfire
     wf-config
+    libevdev
+    libinput
     libxkbcommon
+    nlohmann_json
     xcbutilwm
     gtkmm3
-    gtk-layer-shell
   ];
 
-  mesonFlags = [ "--sysconfdir /etc" ];
+  mesonFlags = [
+    # plugins in submodule, packaged individually
+    (lib.mesonBool "enable_windecor" false)
+    (lib.mesonBool "enable_wayfire_shadows" false)
+    (lib.mesonBool "enable_focus_request" false)
+  ];
+
+  env = {
+    PKG_CONFIG_WAYFIRE_METADATADIR = "${placeholder "out"}/share/wayfire/metadata";
+  };
 
   meta = {
     homepage = "https://github.com/WayfireWM/wayfire-plugins-extra";

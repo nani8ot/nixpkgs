@@ -24,20 +24,15 @@
 
 mkDerivation rec {
   pname = "tellico";
-  version = "3.5.1";
+  version = "3.5.5";
 
   src = fetchFromGitLab {
     domain = "invent.kde.org";
     owner = "office";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-opg4FbfOM48eqWQUJnMHH7KSo6x4S2DHd7ucPw6iTzg=";
+    hash = "sha256-0I4oDMLYWomAF+wpPeA1NQk4nnhUV1RT6IYKJdOUcas=";
   };
-
-  postPatch = ''
-    substituteInPlace src/gui/imagewidget.h \
-      --replace ksane_version.h KF5/ksane_version.h
-  '';
 
   nativeBuildInputs = [
     cmake
@@ -66,6 +61,7 @@ mkDerivation rec {
 
   meta = with lib; {
     description = "Collection management software, free and simple";
+    mainProgram = "tellico";
     homepage = "https://tellico-project.org/";
     license = with licenses; [ gpl2Only gpl3Only lgpl2Only ];
     maintainers = with maintainers; [ numkem ];

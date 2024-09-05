@@ -1,41 +1,60 @@
-{ lib
-, buildPythonPackage
-, fetchFromGitHub
-, icalendar
-, pytz
-, python-dateutil
-, x-wr-timezone
-, pytestCheckHook
-, restructuredtext_lint
-, pygments
-, tzdata
+{
+  lib,
+  buildPythonPackage,
+  pythonOlder,
+  fetchFromGitHub,
+  fetchpatch2,
+  setuptools,
+  icalendar,
+  python-dateutil,
+  tzdata,
+  x-wr-timezone,
+  pytestCheckHook,
+  pytz,
+  restructuredtext-lint,
+  pygments,
 }:
 
 buildPythonPackage rec {
   pname = "recurring-ical-events";
-  version = "2.0.2";
+  version = "3.2.0";
 
-  format = "setuptools";
+  disabled = pythonOlder "3.8";
+
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "niccokunzmann";
     repo = "python-recurring-ical-events";
     rev = "v${version}";
-    hash = "sha256-aM7c/HE8xLqT5wCLaCrfFn6c7FIkCJA6TTICZprAgNM=";
+    hash = "sha256-qglApMoRtMqg03HBO00k9anRquA5X9ew919QUMWIpjo=";
   };
 
-  propagatedBuildInputs = [
+  patches = [
+    # https://github.com/niccokunzmann/python-recurring-ical-events/pull/169
+    (fetchpatch2 {
+      name = "make-tests-compatible-with-icalendar-v5.patch";
+      url = "https://github.com/niccokunzmann/python-recurring-ical-events/commit/0bb4b4586b55978a1d154cd7abbc42eaf1cefb92.patch";
+      hash = "sha256-1tG/U0ELMIwS50eolXNou0aFQBZGNjcc2Zcz1gd8rd4=";
+    })
+  ];
+
+  build-system = [ setuptools ];
+
+  pythonRelaxDeps = [ "icalendar" ];
+
+  dependencies = [
     icalendar
-    pytz
     python-dateutil
+    tzdata
     x-wr-timezone
   ];
 
   nativeCheckInputs = [
     pytestCheckHook
-    restructuredtext_lint
+    pytz
+    restructuredtext-lint
     pygments
-    tzdata
   ];
 
   pythonImportsCheck = [ "recurring_ical_events" ];

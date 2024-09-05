@@ -4,6 +4,7 @@
 , fetchurl
 , fetchFromGitHub
 , fetchPypi
+, fetchpatch
 
 # Build time
 , cmake
@@ -11,6 +12,7 @@
 , fmt
 , git
 , makeWrapper
+, nasm
 , pkg-config
 , which
 
@@ -23,14 +25,15 @@
 , boost179
 , bzip2
 , cryptsetup
-, cimg
 , cunit
 , doxygen
 , gperf
 , graphviz
+, gnugrep
 , gtest
 , icu
-, jsoncpp
+, kmod
+, libcap
 , libcap_ng
 , libnl
 , libxml2
@@ -39,7 +42,7 @@
 , lz4
 , oath-toolkit
 , openldap
-, python310
+, python311
 , rdkafka
 , rocksdb
 , snappy
@@ -47,6 +50,9 @@
 , utf8proc
 , zlib
 , zstd
+
+# Dependencies of overridden Python dependencies, hopefully we can remove these soon.
+, rustPlatform
 
 # Optional Dependencies
 , curl ? null
@@ -85,7 +91,7 @@
 assert cryptopp != null || (nss != null && nspr != null);
 
 let
-  shouldUsePkg = pkg: if pkg != null && pkg.meta.available then pkg else null;
+  shouldUsePkg = pkg: if pkg != null && lib.meta.availableOn stdenv.hostPlatform pkg then pkg else null;
 
   optYasm = shouldUsePkg yasm;
   optExpat = shouldUsePkg expat;
@@ -132,11 +138,11 @@ let
     none = [ ];
   };
 
-  getMeta = description: with lib; {
+  getMeta = description: {
      homepage = "https://ceph.io/en/";
      inherit description;
-     license = with licenses; [ lgpl21 gpl2 bsd3 mit publicDomain ];
-     maintainers = with maintainers; [ adev ak johanot krav ];
+     license = with lib.licenses; [ lgpl21 gpl2Only bsd3 mit publicDomain ];
+     maintainers = with lib.maintainers; [ adev ak johanot krav nh2 ];
      platforms = [ "x86_64-linux" "aarch64-linux" ];
    };
 
@@ -163,20 +169,81 @@ let
   };
 
   # Watch out for python <> boost compatibility
-  python = python310.override {
-    packageOverrides = self: super: {
-      sqlalchemy = super.sqlalchemy.overridePythonAttrs rec {
-        version = "1.4.46";
+  python = python311.override {
+    self = python;
+    packageOverrides = self: super: let
+      bcryptOverrideVersion = "4.0.1";
+    in {
+      # Ceph does not support the following yet:
+      # * `bcrypt` > 4.0
+      # * `cryptography` > 40
+      # See:
+      # * https://github.com/NixOS/nixpkgs/pull/281858#issuecomment-1899358602
+      # * Upstream issue: https://tracker.ceph.com/issues/63529
+      #   > Python Sub-Interpreter Model Used by ceph-mgr Incompatible With Python Modules Based on PyO3
+      # * Moved to issue: https://tracker.ceph.com/issues/64213
+      #   > MGR modules incompatible with later PyO3 versions - PyO3 modules may only be initialized once per interpreter process
+
+      bcrypt = super.bcrypt.overridePythonAttrs (old: rec {
+        pname = "bcrypt";
+        version = bcryptOverrideVersion;
         src = fetchPypi {
-          pname = "SQLAlchemy";
-          inherit version;
-          hash = "sha256-aRO4JH2KKS74MVFipRkx4rQM6RaB8bbxj2lwRSAMSjA=";
+          inherit pname version;
+          hash = "sha256-J9N1kDrIJhz+QEf2cJ0W99GNObHskqr3KvmJVSplDr0=";
         };
-        disabledTestPaths = [
-          "test/aaa_profiling"
-          "test/ext/mypy"
+        cargoRoot = "src/_bcrypt";
+        cargoDeps = rustPlatform.fetchCargoTarball {
+          inherit src;
+          sourceRoot = "${pname}-${version}/${cargoRoot}";
+          name = "${pname}-${version}";
+          hash = "sha256-lDWX69YENZFMu7pyBmavUZaalGvFqbHSHfkwkzmDQaY=";
+        };
+      });
+
+      # We pin the older `cryptography` 40 here;
+      # this also forces us to pin an older `pyopenssl` because the current one
+      # is not compatible with older `cryptography`, see:
+      #     https://github.com/pyca/pyopenssl/blob/d9752e44127ba36041b045417af8a0bf16ec4f1e/CHANGELOG.rst#2320-2023-05-30
+      cryptography = self.callPackage ./old-python-packages/cryptography.nix {};
+
+      # This is the most recent version of `pyopenssl` that's still compatible with `cryptography` 40.
+      # See https://github.com/NixOS/nixpkgs/pull/281858#issuecomment-1899358602
+      pyopenssl = super.pyopenssl.overridePythonAttrs (old: rec {
+        version = "23.1.1";
+        src = fetchPypi {
+          pname = "pyOpenSSL";
+          inherit version;
+          hash = "sha256-hBSYub7GFiOxtsR+u8AjZ8B9YODhlfGXkIF/EMyNsLc=";
+        };
+        disabledTests = old.disabledTests or [ ] ++ [
+          "test_export_md5_digest"
         ];
-      };
+        propagatedBuildInputs = old.propagatedBuildInputs or [ ] ++ [
+          self.flaky
+        ];
+      });
+
+
+      fastapi = super.fastapi.overridePythonAttrs (old: rec {
+        # Flaky test:
+        #     ResourceWarning: Unclosed <MemoryObjectSendStream>
+        # Unclear whether it's flaky in general or only in this overridden package set.
+        doCheck = false;
+      });
+
+      # Ceph does not support `kubernetes` >= 19, see:
+      #     https://github.com/NixOS/nixpkgs/pull/281858#issuecomment-1900324090
+      kubernetes = super.kubernetes.overridePythonAttrs (old: rec {
+        version = "18.20.0";
+        src = fetchFromGitHub {
+          owner = "kubernetes-client";
+          repo = "python";
+          rev = "v${version}";
+          sha256 = "1sawp62j7h0yksmg9jlv4ik9b9i1a1w9syywc9mv8x89wibf5ql1";
+          fetchSubmodules = true;
+        };
+      });
+
     };
   };
 
@@ -190,7 +257,7 @@ let
     ceph-common
 
     # build time
-    cython
+    cython_0
 
     # debian/control
     bcrypt
@@ -225,21 +292,55 @@ let
   ]);
   inherit (ceph-python-env.python) sitePackages;
 
-  version = "17.2.5";
+  version = "18.2.4";
   src = fetchurl {
     url = "https://download.ceph.com/tarballs/ceph-${version}.tar.gz";
-    hash = "sha256-NiJpwUeROvh0siSaRoRrDm+C0s61CvRiIrbd7JmRspo=";
+    hash = "sha256-EFqteP3Jo+hASXVesH6gkjDjFO7/1RN151tIf/lQ06s=";
   };
 in rec {
   ceph = stdenv.mkDerivation {
     pname = "ceph";
     inherit src version;
 
+    patches = [
+      # Fixes mgr not being able to import `packaging` due to autotools >= 70.
+      # Remove once https://github.com/ceph/ceph/pull/58624 is merged, see
+      # https://github.com/NixOS/nixpkgs/pull/330226#issuecomment-2268421031
+      (fetchpatch {
+        url = "https://github.com/ceph/ceph/commit/8da2d857fa8fdfedd7aad0ca90e1780a3ed085c9.patch";
+        name = "ceph-mgr-python-fix-packaging-import.patch";
+        hash = "sha256-3Yl1X6UfTf0XCXJxgRnM/Js9sz8tS+hsqViY6gDExoI=";
+      })
+
+      # Fixes cryptesetup version parsing regex, see
+      # * https://github.com/NixOS/nixpkgs/issues/334227
+      # * https://www.mail-archive.com/ceph-users@ceph.io/msg26309.html
+      # * https://github.com/ceph/ceph/pull/58997
+      # Remove once we're on the next version of Ceph 18, when this should be in:
+      # https://github.com/ceph/ceph/pull/58997
+      (fetchpatch {
+        url = "https://github.com/ceph/ceph/commit/6ae874902b63652fa199563b6e7950cd75151304.patch";
+        name = "ceph-reef-ceph-volume-fix-set_dmcrypt_no_workqueue.patch";
+        hash = "sha256-r+7hcCz2WF/rJfgKwTatKY9unJlE8Uw3fmOyaY5jVH0=";
+      })
+      (fetchpatch {
+        url = "https://github.com/ceph/ceph/commit/607eb34b2c278566c386efcbf3018629cf08ccfd.patch";
+        name = "ceph-volume-fix-set_dmcrypt_no_workqueue-regex.patch";
+        hash = "sha256-q28Q7OIyFoMyMBCPXGA+AdNqp+9/6J/XwD4ODjx+JXY=";
+      })
+    ];
+
+    postPatch = ''
+      substituteInPlace cmake/modules/Finduring.cmake \
+        --replace-fail "liburing.a liburing" "uring"
+    '';
+
     nativeBuildInputs = [
       cmake
       fmt
       git
       makeWrapper
+      nasm
       pkg-config
       python
       python.pkgs.python # for the toPythonPath function
@@ -251,22 +352,18 @@ in rec {
       graphviz
     ];
 
-    enableParallelBuilding = true;
-
     buildInputs = cryptoLibsMap.${cryptoStr} ++ [
       arrow-cpp
       babeltrace
       boost
       bzip2
       ceph-python-env
-      cimg
       cryptsetup
       cunit
       gperf
       gtest
-      jsoncpp
       icu
-      libcap_ng
+      libcap
       libnl
       libxml2
       lttng-ust
@@ -287,6 +384,7 @@ in rec {
       zstd
     ] ++ lib.optionals stdenv.isLinux [
       keyutils
+      libcap_ng
       liburing
       libuuid
       linuxHeaders
@@ -306,30 +404,50 @@ in rec {
 
     pythonPath = [ ceph-python-env "${placeholder "out"}/${ceph-python-env.sitePackages}" ];
 
+    # replace /sbin and /bin based paths with direct nix store paths
+    # increase the `command` buffer size since 2 nix store paths cannot fit within 128 characters
     preConfigure =''
-      substituteInPlace src/common/module.c --replace "/sbin/modinfo"  "modinfo"
-      substituteInPlace src/common/module.c --replace "/sbin/modprobe" "modprobe"
-      substituteInPlace src/common/module.c --replace "/bin/grep" "grep"
+      substituteInPlace src/common/module.c \
+        --replace "char command[128];" "char command[256];" \
+        --replace "/sbin/modinfo"  "${kmod}/bin/modinfo" \
+        --replace "/sbin/modprobe" "${kmod}/bin/modprobe" \
+        --replace "/bin/grep" "${gnugrep}/bin/grep"
 
       # install target needs to be in PYTHONPATH for "*.pth support" check to succeed
       # set PYTHONPATH, so the build system doesn't silently skip installing ceph-volume and others
       export PYTHONPATH=${ceph-python-env}/${sitePackages}:$lib/${sitePackages}:$out/${sitePackages}
-      patchShebangs src/script src/spdk src/test src/tools
+      patchShebangs src/
     '';
 
     cmakeFlags = [
       "-DCMAKE_INSTALL_DATADIR=${placeholder "lib"}/lib"
 
-      "-DMGR_PYTHON_VERSION=${ceph-python-env.python.pythonVersion}"
       "-DWITH_CEPHFS_SHELL:BOOL=ON"
       "-DWITH_SYSTEMD:BOOL=OFF"
+      # `WITH_JAEGER` requires `thrift` as a depenedncy (fine), but the build fails with:
+      #     CMake Error at src/opentelemetry-cpp-stamp/opentelemetry-cpp-build-Release.cmake:49 (message):
+      #     Command failed: 2
+      #
+      #        'make' 'opentelemetry_trace' 'opentelemetry_exporter_jaeger_trace'
+      #
+      #     See also
+      #
+      #        /build/ceph-18.2.0/build/src/opentelemetry-cpp/src/opentelemetry-cpp-stamp/opentelemetry-cpp-build-*.log
+      # and that file contains:
+      #     /build/ceph-18.2.0/src/jaegertracing/opentelemetry-cpp/exporters/jaeger/src/TUDPTransport.cc: In member function 'virtual void opentelemetry::v1::exporter::jaeger::TUDPTransport::close()':
+      #     /build/ceph-18.2.0/src/jaegertracing/opentelemetry-cpp/exporters/jaeger/src/TUDPTransport.cc:71:7: error: '::close' has not been declared; did you mean 'pclose'?
+      #       71 |     ::THRIFT_CLOSESOCKET(socket_);
+      #          |       ^~~~~~~~~~~~~~~~~~
+      # Looks like `close()` is somehow not included.
+      # But the relevant code is already removed in `open-telemetry` 1.10: https://github.com/open-telemetry/opentelemetry-cpp/pull/2031
+      # So it's proably not worth trying to fix that for this Ceph version,
+      # and instead just disable Ceph's Jaeger support.
+      "-DWITH_JAEGER:BOOL=OFF"
       "-DWITH_TESTS:BOOL=OFF"
 
       # Use our own libraries, where possible
-      "-DWITH_SYSTEM_ARROW:BOOL=ON"
+      "-DWITH_SYSTEM_ARROW:BOOL=ON" # Only used if other options enable Arrow support.
       "-DWITH_SYSTEM_BOOST:BOOL=ON"
-      "-DWITH_SYSTEM_CIMG:BOOL=ON"
-      "-DWITH_SYSTEM_JSONCPP:BOOL=ON"
       "-DWITH_SYSTEM_GTEST:BOOL=ON"
       "-DWITH_SYSTEM_ROCKSDB:BOOL=ON"
       "-DWITH_SYSTEM_UTF8PROC:BOOL=ON"
@@ -337,11 +455,17 @@ in rec {
 
       # TODO breaks with sandbox, tries to download stuff with npm
       "-DWITH_MGR_DASHBOARD_FRONTEND:BOOL=OFF"
-      # no matching function for call to 'parquet::PageReader::Open(std::shared_ptr<arrow::io::InputStream>&, int64_t, arrow::Compression::type, parquet::MemoryPool*, parquet::CryptoContext*)'
-      "-DWITH_RADOSGW_SELECT_PARQUET:BOOL=OFF"
       # WITH_XFS has been set default ON from Ceph 16, keeping it optional in nixpkgs for now
       ''-DWITH_XFS=${if optLibxfs != null then "ON" else "OFF"}''
     ] ++ lib.optional stdenv.isLinux "-DWITH_SYSTEM_LIBURING=ON";
+
+    preBuild =
+      # The legacy-option-headers target is not correctly empbedded in the build graph.
+      # It also contains some internal race conditions that we work around by building with `-j 1`.
+      # Upstream discussion for additional context at https://tracker.ceph.com/issues/63402.
+      ''
+        cmake --build . --target legacy-option-headers -j 1
+      '';
 
     postFixup = ''
       wrapPythonPrograms
@@ -363,11 +487,13 @@ in rec {
 
     passthru = {
       inherit version;
+      inherit python; # to be able to test our overridden packages above individually with `nix-build -A`
       tests = {
         inherit (nixosTests)
           ceph-multi-node
           ceph-single-node
-          ceph-single-node-bluestore;
+          ceph-single-node-bluestore
+          ceph-single-node-bluestore-dmcrypt;
       };
     };
   };

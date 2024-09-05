@@ -5,15 +5,20 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "doq";
-  version = "0.9.1";
-  format = "setuptools";
+  version = "0.10.0";
+  pyproject = true;
 
   src = fetchFromGitHub {
     owner = "heavenshell";
     repo = "py-doq";
     rev = "refs/tags/${version}";
-    hash = "sha256-6ff7R/2Jo4jYm1hA70yopjklpKIMWlj7DH9eKxOlfgU=";
+    hash = "sha256-iVu+5o8pZ5OhIzNItWbzUzqC3VQ6HCD7nP5gW/PVAMM=";
   };
+
+  nativeBuildInputs = with python3.pkgs; [
+    setuptools
+    setuptools-generate
+  ];
 
   propagatedBuildInputs = with python3.pkgs; [
     jinja2
@@ -23,7 +28,7 @@ python3.pkgs.buildPythonApplication rec {
 
   nativeCheckInputs = with python3.pkgs; [
     parameterized
-    unittestCheckHook
+    pytestCheckHook
   ];
 
   pythonImportsCheck = [ "doq" ];
@@ -31,8 +36,9 @@ python3.pkgs.buildPythonApplication rec {
   meta = with lib; {
     description = "Docstring generator for Python";
     homepage = "https://github.com/heavenshell/py-doq";
-    changelog = "https://github.com/heavenshell/py-doq/releases/tag/${src.rev}";
+    changelog = "https://github.com/heavenshell/py-doq/releases/tag/${lib.removePrefix "refs/tags/" src.rev}";
     license = licenses.bsd3;
     maintainers = with maintainers; [ natsukium ];
+    mainProgram = "doq";
   };
 }

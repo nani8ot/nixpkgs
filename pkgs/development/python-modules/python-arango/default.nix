@@ -1,15 +1,25 @@
-{ lib
-, arangodb
-, buildPythonPackage
-, fetchFromGitHub
-, pythonOlder
-, pytestCheckHook
-, pyjwt
-, pytest
-, mock
-, requests
-, requests-toolbelt
-, setuptools
+{
+  lib,
+  buildPythonPackage,
+  fetchFromGitHub,
+  pythonOlder,
+  pytestCheckHook,
+
+  # build-system
+  setuptools,
+  setuptools-scm,
+
+  # dependencies
+  urllib3,
+  requests,
+  requests-toolbelt,
+  pyjwt,
+  importlib-metadata,
+  packaging,
+
+  # tests
+  arangodb,
+  mock,
 }:
 
 let
@@ -23,23 +33,31 @@ in
 
 buildPythonPackage rec {
   pname = "python-arango";
-  version = "7.5.7";
-  format = "setuptools";
+  version = "8.1.0";
+  format = "pyproject";
 
   disabled = pythonOlder "3.7";
 
   src = fetchFromGitHub {
-    owner = "ArangoDB-Community";
+    owner = "arangodb";
     repo = "python-arango";
     rev = "refs/tags/${version}";
-    hash = "sha256-cd2xE5rYLl3NOv/DZjmHRPCe224k4XyPjo9aXV1ZhvU=";
+    hash = "sha256-bMCzuqKLOQYmBGhdfHaff+0ZIVmZ4iy5jFtmV7X0pIM=";
   };
 
+  nativeBuildInputs = [
+    setuptools
+    setuptools-scm
+  ];
+
   propagatedBuildInputs = [
+    importlib-metadata
     requests
     requests-toolbelt
+    packaging
     pyjwt
     setuptools
+    urllib3
   ];
 
   nativeCheckInputs = [
@@ -130,9 +148,7 @@ buildPythonPackage rec {
     "test_replication_applier"
   ];
 
-  pythonImportsCheck = [
-    "arango"
-  ];
+  pythonImportsCheck = [ "arango" ];
 
   meta = with lib; {
     description = "Python Driver for ArangoDB";

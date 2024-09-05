@@ -7,24 +7,25 @@
 , pkg-config
 , substituteAll
 , vala
+, libadwaita
 , libgee
-, granite
-, gtk3
+, granite7
+, gtk4
 , networkmanager
 , networkmanagerapplet
-, libnma
+, libnma-gtk4
 , switchboard
 }:
 
 stdenv.mkDerivation rec {
   pname = "switchboard-plug-network";
-  version = "2.4.4";
+  version = "8.0.0";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = pname;
     rev = version;
-    sha256 = "sha256-g62+DF84eEI+TvUr1OkeqLnCLz/b7e+xwuTNZS0WJQA=";
+    hash = "sha256-N/S4oO7wwOMJZhQeqAeLBOMEsJtoKItxmGhsLHMuOoM=";
   };
 
   patches = [
@@ -42,11 +43,12 @@ stdenv.mkDerivation rec {
   ];
 
   buildInputs = [
-    granite
-    gtk3
+    granite7
+    gtk4
+    libadwaita
     libgee
     networkmanager
-    libnma
+    libnma-gtk4
     switchboard
   ];
 

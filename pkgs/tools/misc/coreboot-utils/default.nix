@@ -1,23 +1,23 @@
 { lib, stdenv, fetchgit, pkg-config, zlib, pciutils, openssl, coreutils, acpica-tools, makeWrapper, gnugrep, gnused, file, buildEnv }:
 
 let
-  version = "4.20";
+  version = "24.05";
 
-  commonMeta = with lib; {
+  commonMeta = {
     description = "Various coreboot-related tools";
     homepage = "https://www.coreboot.org";
-    license = with licenses; [ gpl2Only gpl2Plus ];
-    maintainers = with maintainers; [ felixsinger yuka ];
-    platforms = platforms.linux;
+    license = with lib.licenses; [ gpl2Only gpl2Plus ];
+    maintainers = with lib.maintainers; [ felixsinger jmbaur ];
+    platforms = lib.platforms.linux;
   };
 
-  generic = { pname, path ? "util/${pname}", ... }@args: stdenv.mkDerivation (rec {
+  generic = { pname, path ? "util/${pname}", ... }@args: stdenv.mkDerivation ({
     inherit pname version;
 
     src = fetchgit {
       url = "https://review.coreboot.org/coreboot";
-      rev = "465fbbe93ee01b4576689a90b7ddbeec23cdace2";
-      sha256 = "sha256-DPaudCeK9SKu2eN1fad6a52ICs5d/GXCUFMdqAl65BE=";
+      rev = version;
+      hash = "sha256-Fq3tZje6QoMskxqWd61OstgI9Sj25yijf8S3LiTJuYc=";
     };
 
     enableParallelBuilding = true;

@@ -1,7 +1,6 @@
 { lib
 , stdenv
 , fetchurl
-, fetchpatch
 , buildPackages
 , coreutils
 , pam
@@ -13,23 +12,18 @@
 , withSssd ? false
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "sudo";
-  version = "1.9.14p3";
+  # be sure to check if nixos/modules/security/sudo.nix needs updating when bumping
+  # e.g. links to man pages, value constraints etc.
+  version = "1.9.15p5";
+
+  __structuredAttrs = true;
 
   src = fetchurl {
-    url = "https://www.sudo.ws/dist/${pname}-${version}.tar.gz";
-    hash = "sha256-oIMYscS8hYLABNTNmuKQOrxUnn5GuoFeQf6B0cB4K2I=";
+    url = "https://www.sudo.ws/dist/sudo-${finalAttrs.version}.tar.gz";
+    hash = "sha256-VY0QuaGZH7O5+n+nsH7EQFt677WzywsIcdvIHjqI5Vg=";
   };
-
-  patches = [
-    # Extra bugfix not included in 1.9.14p3 to address a bug that impacts the
-    # NixOS test suite for sudo.
-    (fetchpatch {
-      url = "https://github.com/sudo-project/sudo/commit/760c9c11074cb921ecc0da9fbb5f0a12afd46233.patch";
-      hash = "sha256-smwyoYEkaqfQYz9C4VVz59YMtKabOPpwhS+RBwXbWuE=";
-    })
-  ];
 
   prePatch = ''
     # do not set sticky bit in nix store
@@ -45,16 +39,13 @@ stdenv.mkDerivation rec {
     "--with-iologdir=/var/log/sudo-io"
     "--with-sendmail=${sendmailPath}"
     "--enable-tmpfiles.d=no"
+    "--with-passprompt=[sudo] password for %p: " # intentional trailing space
   ] ++ lib.optionals withInsults [
     "--with-insults"
     "--with-all-insults"
   ] ++ lib.optionals withSssd [
     "--with-sssd"
     "--with-sssd-lib=${sssd}/lib"
-  ];
-
-  configureFlagsArray = [
-    "--with-passprompt=[sudo] password for %p: " # intentional trailing space
   ];
 
   postConfigure =
@@ -81,9 +72,8 @@ stdenv.mkDerivation rec {
 
   passthru.tests = { inherit (nixosTests) sudo; };
 
-  meta = {
-    description = "A command to run commands as root";
-
+  meta = with lib; {
+    description = "Command to run commands as root";
     longDescription =
       ''
         Sudo (su "do") allows a system administrator to delegate
@@ -91,13 +81,11 @@ stdenv.mkDerivation rec {
         to run some (or all) commands as root or another user while
         providing an audit trail of the commands and their arguments.
       '';
-
     homepage = "https://www.sudo.ws/";
-
-    license = "https://www.sudo.ws/sudo/license.html";
-
-    maintainers = with lib.maintainers; [ eelco delroth ];
-
-    platforms = lib.platforms.linux;
+    # From https://www.sudo.ws/about/license/
+    license = with licenses; [ sudo bsd2 bsd3 zlib ];
+    maintainers = with maintainers; [ rhendric ];
+    platforms = platforms.linux ++ platforms.freebsd;
+    mainProgram = "sudo";
   };
-}
+})

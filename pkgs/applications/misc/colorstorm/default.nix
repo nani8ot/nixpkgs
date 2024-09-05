@@ -1,7 +1,7 @@
 { lib
 , stdenv
 , fetchFromGitHub
-, zigHook
+, zig_0_9
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -16,14 +16,15 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   nativeBuildInputs = [
-    zigHook
+    zig_0_9.hook
   ];
 
   meta = {
-    description = "A color theme generator for editors and terminal emulators";
+    description = "Color theme generator for editors and terminal emulators";
     homepage = "https://github.com/benbusby/colorstorm";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ ];
-    inherit (zigHook.meta) platforms;
+    maintainers = [ ];
+    inherit (zig_0_9.meta) platforms;
+    mainProgram = "colorstorm";
   };
 })

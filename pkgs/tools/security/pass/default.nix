@@ -72,16 +72,11 @@ stdenv.mkDerivation rec {
 
   installFlags = [ "PREFIX=$(out)" "WITH_ALLCOMP=yes" ];
 
-  postInstall = ''
-    # Install Emacs Mode. NOTE: We can't install the necessary
-    # dependencies (s.el) here. The user has to do this themselves.
-    mkdir -p "$out/share/emacs/site-lisp"
-    cp "contrib/emacs/password-store.el" "$out/share/emacs/site-lisp/"
-  '' + lib.optionalString dmenuSupport ''
+  postInstall = lib.optionalString dmenuSupport ''
     cp "contrib/dmenu/passmenu" "$out/bin/"
   '';
 
-  wrapperPath = with lib; makeBinPath ([
+  wrapperPath = lib.makeBinPath ([
     coreutils
     findutils
     getopt
@@ -94,11 +89,11 @@ stdenv.mkDerivation rec {
     openssh
     procps
     qrencode
-  ] ++ optional stdenv.isDarwin openssl
-    ++ optional x11Support xclip
-    ++ optional waylandSupport wl-clipboard
-    ++ optionals (waylandSupport && dmenuSupport) [ ydotool dmenu-wayland ]
-    ++ optionals (x11Support && dmenuSupport) [ xdotool dmenu ]
+  ] ++ lib.optional stdenv.isDarwin openssl
+    ++ lib.optional x11Support xclip
+    ++ lib.optional waylandSupport wl-clipboard
+    ++ lib.optionals (waylandSupport && dmenuSupport) [ ydotool dmenu-wayland ]
+    ++ lib.optionals (x11Support && dmenuSupport) [ xdotool dmenu ]
   );
 
   postFixup = ''

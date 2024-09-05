@@ -1,34 +1,34 @@
-{ stdenv, lib, fetchFromGitHub, fetchpatch, cairo, libxkbcommon
-, pango, fribidi, harfbuzz, pcre, pkg-config, scdoc
+{ stdenv, lib, fetchFromGitHub, cairo, libxkbcommon
+, pango, fribidi, harfbuzz, pkg-config, scdoc
 , ncursesSupport ? true, ncurses
 , waylandSupport ? true, wayland, wayland-protocols, wayland-scanner
 , x11Support ? true, xorg
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "bemenu";
-  version = "0.6.15";
+  version = "0.6.23";
 
   src = fetchFromGitHub {
     owner = "Cloudef";
-    repo = pname;
-    rev = version;
-    sha256 = "sha256-gdeNaqtxqxBtG9bkxozPE/DLQgLqCt1vh2A2WmgNn7w=";
+    repo = "bemenu";
+    rev = finalAttrs.version;
+    hash = "sha256-0vpqJ2jydTt6aVni0ma0g+80PFz+C4xJ5M77sMODkSg=";
   };
 
   strictDeps = true;
   nativeBuildInputs = [ pkg-config scdoc ]
     ++ lib.optionals waylandSupport [ wayland-scanner ];
 
-  buildInputs = with lib; [
+  buildInputs = [
     cairo
     fribidi
     harfbuzz
     libxkbcommon
     pango
-  ] ++ optional ncursesSupport ncurses
-    ++ optionals waylandSupport [ wayland wayland-protocols ]
-    ++ optionals x11Support [
+  ] ++ lib.optional ncursesSupport ncurses
+    ++ lib.optionals waylandSupport [ wayland wayland-protocols ]
+    ++ lib.optionals x11Support [
       xorg.libX11 xorg.libXinerama xorg.libXft
       xorg.libXdmcp xorg.libpthreadstubs xorg.libxcb
     ];
@@ -44,7 +44,8 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/Cloudef/bemenu";
     description = "Dynamic menu library and client program inspired by dmenu";
     license = licenses.gpl3Plus;
-    maintainers = with maintainers; [ lheckemann ];
+    maintainers = with maintainers; [ crertel ];
+    mainProgram = "bemenu";
     platforms = with platforms; linux;
   };
-}
+})

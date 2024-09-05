@@ -4,11 +4,10 @@
 , curl
 , fetchFromBitbucket
 , fetchFromGitHub
-, fetchzip
 , ghc_filesystem
 , glew
 , glfw
-, gnome
+, zenity
 , gtk3-x11
 , imagemagick
 , jansson
@@ -19,15 +18,13 @@
 , libjack2
 , libpulseaudio
 , libsamplerate
-, libXext
-, libXi
 , makeDesktopItem
 , makeWrapper
 , pkg-config
 , rtmidi
 , speexdsp
 , stdenv
-, wrapGAppsHook
+, wrapGAppsHook3
 , zstd
 }:
 
@@ -39,14 +36,14 @@ let
   pffft-source = fetchFromBitbucket {
     owner = "jpommier";
     repo = "pffft";
-    rev = "988259a41d1522047a9420e6265a6ba8289c1654";
-    sha256 = "Oq5N02UNXsbhcPUfjMtD0cgqAZsGx9ke9A+ArrenzGE=";
+    rev = "fbc4058602803f40dc554b8a5d2bcc694c005f2f";
+    sha256 = "16biji3115232cr1j975hpxw68lfybajlspnhfjcwg8jz2d8ybrf";
   };
   fuzzysearchdatabase-source = fetchFromBitbucket {
     owner = "j_norberg";
     repo = "fuzzysearchdatabase";
-    rev = "a3a1bf557b8e6ee58b55fa82ff77ff7a3d141949";
-    sha256 = "13ib72acbxn1cnf66im0v4nlr1464v7j08ra2bprznjmy127xckm";
+    rev = "23122d1ff60d936fd766361a30210c954e0c5449";
+    sha256 = "1s88blx1rn2racmb8n5g0kh1ym7v21573l5m42c4nz266vmrvrvz";
   };
   nanovg-source = fetchFromGitHub {
     owner = "VCVRack";
@@ -57,38 +54,38 @@ let
   nanosvg-source = fetchFromGitHub {
     owner = "memononen";
     repo = "nanosvg";
-    rev = "ccdb1995134d340a93fb20e3a3d323ccb3838dd0";
-    sha256 = "ymziU0NgGqxPOKHwGm0QyEdK/8jL/QYk5UdIQ3Tn8jw=";
+    rev = "9da543e8329fdd81b64eb48742d8ccb09377aed1";
+    sha256 = "1pkzv75kavkhrbdd2kvq755jyr0vamgrfr7lc33dq3ipkzmqvs2l";
   };
   osdialog-source = fetchFromGitHub {
     owner = "AndrewBelt";
     repo = "osdialog";
-    rev = "21b9dcc2a1bbdacb9b46da477ffd82a4ce9204b9";
-    sha256 = "+4VCBuQvfiuEUdjFu3IB2FwbHFrDJXTb4vcVg6ZFwSM=";
+    rev = "d0f64f0798c2e47f61d90a5505910ff2d63ca049";
+    sha256 = "1d3058x6wgzw7b0wai792flk7s6ffw0z4n9sl016v91yjwv7ds3a";
   };
   oui-blendish-source = fetchFromGitHub {
-    owner = "AndrewBelt";
+    owner = "VCVRack";
     repo = "oui-blendish";
     rev = "2fc6405883f8451944ed080547d073c8f9f31898";
-    sha256 = "/QZFZuI5kSsEvSfMJlcqB1HiZ9Vcf3vqLqWIMEgxQK8=";
+    sha256 = "1bs0654312555vm7nzswsmky4l8759bjdk17pl22p49rw9k4a1px";
   };
   simde-source = fetchFromGitHub {
     owner = "simd-everywhere";
     repo = "simde";
-    rev = "dd0b662fd8cf4b1617dbbb4d08aa053e512b08e4";
-    sha256 = "1kxwzdlh21scak7wsbb60vwfvndppidj5fgbi26mmh73zsj02mnv";
+    rev = "416091ebdb9e901b29d026633e73167d6353a0b0";
+    sha256 = "064ygc6c737yjx04rydwwhkr4n4s4rbvj27swxwyzvp1h8nka6xf";
   };
   tinyexpr-source = fetchFromGitHub {
     owner = "codeplea";
     repo = "tinyexpr";
-    rev = "4e8cc0067a1e2378faae23eb2dfdd21e9e9907c2";
-    sha256 = "1yxkxsw3bc81cjm2knvyr1z9rlzwmjvq5zd125n34xwq568v904d";
+    rev = "9907207e5def0fabdb60c443517b0d9e9d521393";
+    sha256 = "0xbpd09zvrk2ppm1qm1skk6p50mqr9mzjixv3s0biqq6jpabs88l";
   };
   fundamental-source = fetchFromGitHub {
     owner = "VCVRack";
     repo = "Fundamental";
-    rev = "v2.3.1"; # tip of branch v2
-    sha256 = "1rd5yvdr6k03mc3r2y7wxhmiqd69jfvqmpqagxb83y1mn0zfv0pr";
+    rev = "5ed79544161e0fa9a55faa7c0a5f299e828e12ab"; # tip of branch v2
+    sha256 = "0c6qpigyr0ppvra20hcy1fdcmqa212jckb9wkx4f6fgdby7565wv";
   };
   vcv-rtaudio = stdenv.mkDerivation rec {
     pname = "vcv-rtaudio";
@@ -114,8 +111,8 @@ let
   };
 in
 stdenv.mkDerivation rec {
-  pname = "VCV-Rack";
-  version = "2.3.0";
+  pname = "vcv-rack";
+  version = "2.5.1";
 
   desktopItems = [
     (makeDesktopItem {
@@ -135,7 +132,7 @@ stdenv.mkDerivation rec {
     owner = "VCVRack";
     repo = "Rack";
     rev = "v${version}";
-    sha256 = "1aj7pcvks1da5ydagyxsdksp31rf8dn0bixw55kn34k0g4ky5jiw";
+    sha256 = "1q2bwjfn6crk9lyd6m3py0v754arw1xgpv5kkj6ka1bc2yz839qh";
   };
 
   patches = [
@@ -169,10 +166,14 @@ stdenv.mkDerivation rec {
     cp -r ${fundamental-source} plugins/Fundamental/
     chmod -R +rw plugins/Fundamental # will be used as build dir
     substituteInPlace plugin.mk --replace ":= all" ":= dist"
+    substituteInPlace plugins/Fundamental/src/Logic.cpp \
+      --replace \
+        "LightButton<VCVBezelBig, VCVBezelLightBig<WhiteLight>>" \
+        "struct rack::componentlibrary::LightButton<VCVBezelBig, VCVBezelLightBig<WhiteLight>>"
 
     # Fix reference to zenity
     substituteInPlace dep/osdialog/osdialog_zenity.c \
-      --replace 'zenityBin[] = "zenity"' 'zenityBin[] = "${gnome.zenity}/bin/zenity"'
+      --replace 'zenityBin[] = "zenity"' 'zenityBin[] = "${zenity}/bin/zenity"'
   '';
 
   nativeBuildInputs = [
@@ -182,7 +183,7 @@ stdenv.mkDerivation rec {
     libicns
     makeWrapper
     pkg-config
-    wrapGAppsHook
+    wrapGAppsHook3
   ];
   buildInputs = [
     alsa-lib
@@ -190,7 +191,7 @@ stdenv.mkDerivation rec {
     ghc_filesystem
     glew
     glfw
-    gnome.zenity
+    zenity
     gtk3-x11
     jansson
     libarchive
@@ -249,6 +250,7 @@ stdenv.mkDerivation rec {
     # no-derivatives clause
     license = with licenses; [ gpl3Plus cc-by-nc-40 unfreeRedistributable ];
     maintainers = with maintainers; [ nathyong jpotier ddelabru ];
+    mainProgram = "Rack";
     platforms = platforms.linux;
   };
 }

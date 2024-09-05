@@ -6,34 +6,38 @@
 
 buildGoModule rec {
   pname = "goose";
-  version = "3.14.0";
+  version = "3.22.0";
 
   src = fetchFromGitHub {
     owner = "pressly";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-4WBYfxEmEuFZM+Qt2miw6GxuV5B2nc4XXeyDQi1IISg=";
+    hash = "sha256-QY6K/c3VPpHlsm943mcqOBVPk4EDKhu6V+OZxNmjG9Y=";
   };
 
   proxyVendor = true;
-  vendorHash = "sha256-zsqulNAPcGVp6+ClYtRwM5U6YwRak4ttSLbgPWDxtbI=";
+  vendorHash = "sha256-JFQFzzeeYNAC6b/VKTvn+O1S3zMJO5aAjj3JO96Db8Y=";
 
-  # end-to-end tests require a docker daemon
+  # skipping: end-to-end tests require a docker daemon
   postPatch = ''
-    rm -r tests/e2e
     rm -r tests/gomigrations
-    rm -r tests/vertica
   '';
+
+  subPackages = [
+    "cmd/goose"
+  ];
 
   ldflags = [
     "-s"
     "-w"
-    "-X=main.gooseVersion=${version}"
+    "-X=main.version=${version}"
   ];
 
   checkFlags = [
-    # these also require a docker daemon
-    "-skip=TestClickUpDown|TestClickHouseFirstThree"
+    # NOTE:
+    # - skipping: these also require a docker daemon
+    # - these are for go tests that live outside of the /tests directory
+    "-skip=TestClickUpDown|TestClickHouseFirstThree|TestLockModeAdvisorySession|TestDialectStore|TestGoMigrationStats|TestPostgresSessionLocker"
   ];
 
   doCheck = !stdenv.isDarwin;
@@ -42,6 +46,7 @@ buildGoModule rec {
     description = "Database migration tool which supports SQL migrations and Go functions";
     homepage = "https://pressly.github.io/goose/";
     license = licenses.bsd3;
-    maintainers = with maintainers; [ yuka ];
+    maintainers = [ ];
+    mainProgram = "goose";
   };
 }

@@ -1,6 +1,7 @@
-{ fetchurl, lib, stdenv, substituteAll
+{ lib, stdenv, fetchurl, fetchpatch2, substituteAll
 , libtool, gettext, zlib, bzip2, flac, libvorbis
-, exiv2, libgsf, rpm, pkg-config
+, exiv2, libgsf, pkg-config
+, rpmSupport ? stdenv.isLinux, rpm
 , gstreamerSupport ? true, gst_all_1
 # ^ Needed e.g. for proper id3 and FLAC support.
 #   Set to `false` to decrease package closure size by about 87 MB (53%).
@@ -13,19 +14,26 @@
 # '';
 # See also <https://nixos.org/nixpkgs/manual/#sec-language-gnome>.
 , gtkSupport ? true, glib, gtk3
-, videoSupport ? true, ffmpeg_4, libmpeg2
+, videoSupport ? true, libmpeg2
 }:
 
 stdenv.mkDerivation rec {
   pname = "libextractor";
-  version = "1.11";
+  version = "1.13";
 
   src = fetchurl {
     url = "mirror://gnu/libextractor/${pname}-${version}.tar.gz";
-    sha256 = "sha256-FvYzq4dGo4VHxKHaP0WRGSsIJa2DxDNvBXW4WEPYvY8=";
+    hash = "sha256-u48xLFHSAlciQ/ETxrYtghAwGrMMuu5gT5g32HjN91U=";
   };
 
-  patches = lib.optionals gstreamerSupport [
+  patches = [
+    # 0008513: test_exiv2 fails with Exiv2 0.28
+    # https://bugs.gnunet.org/view.php?id=8513
+    (fetchpatch2 {
+      url = "https://sources.debian.org/data/main/libe/libextractor/1%3A1.13-4/debian/patches/exiv2-0.28.diff";
+      hash = "sha256-Re5iwlSyEpWu3PcHibaRKSfmdyHSZGMOdMZ6svTofvs=";
+    })
+  ] ++ lib.optionals gstreamerSupport [
 
     # Libraries cannot be wrapped so we need to hardcode the plug-in paths.
     (substituteAll {
@@ -46,27 +54,22 @@ stdenv.mkDerivation rec {
 
   buildInputs =
    [ libtool gettext zlib bzip2 flac libvorbis exiv2
-     libgsf rpm
-   ] ++ lib.optionals gstreamerSupport
+     libgsf
+   ] ++ lib.optionals rpmSupport [ rpm ]
+     ++ lib.optionals gstreamerSupport
           ([ gst_all_1.gstreamer ] ++ gstPlugins gst_all_1)
      ++ lib.optionals gtkSupport [ glib gtk3 ]
-     ++ lib.optionals videoSupport [ ffmpeg_4 libmpeg2 ];
-
-  configureFlags = [
-    "--disable-ltdl-install"
-    "--with-ltdl-include=${libtool}/include"
-    "--with-ltdl-lib=${libtool.lib}/lib"
-    "--enable-xpdf"
-  ];
+     ++ lib.optionals videoSupport [ libmpeg2 ];
 
   # Checks need to be run after "make install", otherwise plug-ins are not in
   # the search path, etc.
   doCheck = false;
-  doInstallCheck = true;
+  doInstallCheck = !stdenv.isDarwin;
   installCheckPhase = "make check";
 
   meta = with lib; {
     description = "Simple library for keyword extraction";
+    mainProgram = "extract";
 
     longDescription =
       '' GNU libextractor is a library used to extract meta-data from files
@@ -92,6 +95,6 @@ stdenv.mkDerivation rec {
     license = licenses.gpl3Plus;
 
     maintainers = [ maintainers.jorsn ];
-    platforms = platforms.linux;
+    platforms = platforms.unix;
   };
 }

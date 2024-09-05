@@ -5,20 +5,25 @@
 , cmake
 , python3Packages
 , Security
+
+# tests
+, firefox-unwrapped
+, firefox-esr-unwrapped
+, mesa
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "rust-cbindgen";
-  version = "0.24.6";
+  version = "0.27.0";
 
   src = fetchFromGitHub {
     owner = "mozilla";
     repo = "cbindgen";
     rev = "v${version}";
-    hash = "sha256-RHh97hwWmjV6hw+fX+fOtixX/DGedTf9cx+PYPW6/wI=";
+    hash = "sha256-XTGHHD5Qw3mr+lkPKOXyqb0K3sEENW8Sf0n9mtrFFXI=";
   };
 
-  cargoSha256 = "sha256-7G/16arXYwt7Nrs1isWyrPubm8GMi8NsjLjWAD8x6aM=";
+  cargoHash = "sha256-l4FgwXdibek4BAnqjWd1rLxpEwuMNjYgvo6X3SS3fRo=";
 
   buildInputs = lib.optional stdenv.isDarwin Security;
 
@@ -41,9 +46,18 @@ rustPlatform.buildRustPackage rec {
     "--skip test_body"
   ];
 
+  passthru.tests = {
+    inherit
+      firefox-unwrapped
+      firefox-esr-unwrapped
+      mesa
+    ;
+  };
+
   meta = with lib; {
     changelog = "https://github.com/mozilla/cbindgen/blob/v${version}/CHANGES";
-    description = "A project for generating C bindings from Rust code";
+    description = "Project for generating C bindings from Rust code";
+    mainProgram = "cbindgen";
     homepage = "https://github.com/mozilla/cbindgen";
     license = licenses.mpl20;
     maintainers = with maintainers; [ hexa ];

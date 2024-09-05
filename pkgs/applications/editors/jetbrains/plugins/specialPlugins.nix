@@ -13,7 +13,7 @@
     buildInputs = [ stdenv.cc.cc.lib ];
   };
   "8182" = {
-    # Rust
+    # Rust (deprecated)
     nativeBuildInputs = [ autoPatchelfHook ];
     buildInputs = [ stdenv.cc.cc.lib ];
     buildPhase = ''
@@ -38,7 +38,10 @@
     # Github Copilot
     # Modified version of https://github.com/ktor/nixos/commit/35f4071faab696b2a4d86643726c9dd3e4293964
     buildPhase = ''
-      agent="copilot-agent/bin/copilot-agent-linux"
+      agent='copilot-agent/native/${lib.toLower stdenv.hostPlatform.uname.system}${{
+        x86_64 = "-x64";
+        aarch64 = "-arm64";
+      }.${stdenv.hostPlatform.uname.processor} or ""}/copilot-language-server'
       orig_size=$(stat --printf=%s $agent)
       patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $agent
       patchelf --set-rpath ${lib.makeLibraryPath [glibc gcc-unwrapped]} $agent
@@ -58,6 +61,16 @@
       }
       fix_offset PAYLOAD_POSITION
       fix_offset PRELUDE_POSITION
+    '';
+  };
+  "22407" = {
+    # Rust
+    nativeBuildInputs = [ autoPatchelfHook ];
+    buildInputs = [ stdenv.cc.cc.lib ];
+    buildPhase = ''
+      runHook preBuild
+      chmod +x -R bin
+      runHook postBuild
     '';
   };
 }

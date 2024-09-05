@@ -5,14 +5,14 @@
 
 stdenv.mkDerivation rec {
   pname = "ezquake";
-  version = "3.6.2";
+  version = "3.6.3";
 
   src = fetchFromGitHub {
     owner = "QW-Group";
     repo = pname + "-source";
     rev = version;
     fetchSubmodules = true;
-    hash = "sha256-mi/VDSZ+ybEAaZOhBGh/cSnrRUAB/h+WQZ4Aml0UfW4=";
+    hash = "sha256-ThrsJfj+eP7Lv2ZSNLO6/b98VHrL6/rhwf2p0qMvTF8=";
   };
 
   nativeBuildInputs = [ pkg-config ];
@@ -20,9 +20,9 @@ stdenv.mkDerivation rec {
     expat curl jansson libpng libjpeg libGLU libGL libsndfile libXxf86vm pcre SDL2 vim speex
   ];
 
-  installPhase = with lib; let
-    sys = last (splitString "-" stdenv.hostPlatform.system);
-    arch = head (splitString "-" stdenv.hostPlatform.system);
+  installPhase = let
+    sys = lib.last (lib.splitString "-" stdenv.hostPlatform.system);
+    arch = lib.head (lib.splitString "-" stdenv.hostPlatform.system);
   in ''
     mkdir -p $out/bin
     find .
@@ -31,11 +31,12 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  meta = with lib; {
+  meta = {
     homepage = "https://ezquake.com/";
-    description = "A modern QuakeWorld client focused on competitive online play";
-    license = licenses.gpl2;
-    platforms = platforms.linux;
-    maintainers = with maintainers; [ edwtjo ];
+    description = "Modern QuakeWorld client focused on competitive online play";
+    mainProgram = "ezquake";
+    license = lib.licenses.gpl2Plus;
+    platforms = lib.platforms.linux;
+    maintainers = with lib.maintainers; [ edwtjo ];
   };
 }

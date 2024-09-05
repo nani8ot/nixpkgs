@@ -1,35 +1,29 @@
-{ lib, rustPlatform, fetchFromGitHub, stdenv, Security }:
+{ lib, rustPlatform, fetchFromGitHub, nix-update-script }:
 
 rustPlatform.buildRustPackage rec {
   pname = "cargo-nextest";
-  version = "0.9.57";
+  version = "0.9.77";
 
   src = fetchFromGitHub {
     owner = "nextest-rs";
     repo = "nextest";
     rev = "cargo-nextest-${version}";
-    hash = "sha256-vtKe0cl9PxZgc1zUJQI1YCQm4cRHmzqlBEC4RGUxM44=";
+    hash = "sha256-4wqWCa3HHctKSaSYiiLBa9PM6cWyr0H7blI9BWGLTuI=";
   };
 
-  cargoHash = "sha256-o7nuDoBpSst84jyAVfrE8pLoYcKMF922r39G+gruBUo=";
-
-  buildInputs = lib.optionals stdenv.isDarwin [ Security ];
+  cargoHash = "sha256-9XOkXK5sH+Qo8omS8V8FMgnh+oqLZL4paqoL9UOPevA=";
 
   cargoBuildFlags = [ "-p" "cargo-nextest" ];
   cargoTestFlags = [ "-p" "cargo-nextest" ];
 
-  # TODO: investigate some more why these tests fail in nix
-  checkFlags = [
-    "--skip=tests_integration::test_list"
-    "--skip=tests_integration::test_relocated_run"
-    "--skip=tests_integration::test_run"
-  ];
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
     description = "Next-generation test runner for Rust projects";
+    mainProgram = "cargo-nextest";
     homepage = "https://github.com/nextest-rs/nextest";
     changelog = "https://nexte.st/CHANGELOG.html";
     license = with licenses; [ mit asl20 ];
-    maintainers = with maintainers; [ ekleog figsoda ];
+    maintainers = with maintainers; [ ekleog figsoda matthiasbeyer ];
   };
 }

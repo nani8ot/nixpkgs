@@ -16,14 +16,14 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "nixpkgs-review";
-  version = "2.10.0";
+  version = "2.10.5";
   format = "pyproject";
 
   src = fetchFromGitHub {
     owner = "Mic92";
     repo = "nixpkgs-review";
-    rev = version;
-    hash = "sha256-uMcTwRmELk/vFI7vU4+UUvBDhlF+gVgohIXE0Sm1/d8=";
+    rev = "refs/tags/${version}";
+    hash = "sha256-dRTKE8gkV298ZmMokyy3Ufer/Lp1GQYdEhIBoLhloEQ=";
   };
 
   nativeBuildInputs = [
@@ -53,17 +53,18 @@ python3.pkgs.buildPythonApplication rec {
   postInstall = lib.optionalString withAutocomplete ''
     for cmd in nix-review nixpkgs-review; do
       installShellCompletion --cmd $cmd \
-        --bash <(register-python-argcomplete $out/bin/$cmd) \
-        --fish <(register-python-argcomplete $out/bin/$cmd -s fish) \
-        --zsh <(register-python-argcomplete $out/bin/$cmd -s zsh)
+        --bash <(register-python-argcomplete $cmd) \
+        --fish <(register-python-argcomplete $cmd -s fish) \
+        --zsh <(register-python-argcomplete $cmd -s zsh)
     done
   '';
 
   meta = with lib; {
+    changelog = "https://github.com/Mic92/nixpkgs-review/releases/tag/${version}";
     description = "Review pull-requests on https://github.com/NixOS/nixpkgs";
     homepage = "https://github.com/Mic92/nixpkgs-review";
-    changelog = "https://github.com/Mic92/nixpkgs-review/releases/tag/${version}";
     license = licenses.mit;
+    mainProgram = "nixpkgs-review";
     maintainers = with maintainers; [ figsoda mic92 ];
   };
 }

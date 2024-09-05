@@ -1,49 +1,50 @@
-{ lib, iosevka, fetchFromSourcehut, fetchFromGitHub, buildNpmPackage }:
+{ lib, iosevka, fetchFromGitHub, buildNpmPackage }:
 
 let
   sets = [
     # Family                  | Shapes | Spacing | Style      | Ligatures |
     # ------------------------+--------+---------+------------+-----------|
-    "comfy"                   # Sans   | Compact | Monospaced | Yes       |
-    "comfy-fixed"             # Sans   | Compact | Monospaced | No        |
-    "comfy-duo"               # Sans   | Compact | Duospaced  | Yes       |
+    "comfy" #                 | Sans   | Compact | Monospaced | Yes       |
+    "comfy-fixed" #           | Sans   | Compact | Monospaced | No        |
+    "comfy-duo" #             | Sans   | Compact | Duospaced  | Yes       |
     # ------------------------+--------+---------+------------+-----------|
-    "comfy-motion"            # Slab   | Compact | Monospaced | Yes       |
-    "comfy-motion-fixed"      # Slab   | Compact | Monospaced | No        |
-    "comfy-motion-duo"        # Slab   | Compact | Duospaced  | Yes       |
+    "comfy-motion" #          | Slab   | Compact | Monospaced | Yes       |
+    "comfy-motion-fixed" #    | Slab   | Compact | Monospaced | No        |
+    "comfy-motion-duo" #      | Slab   | Compact | Duospaced  | Yes       |
     # ------------------------+--------+---------+------------+-----------|
-    "comfy-wide"              # Sans   | Wide    | Monospaced | Yes       |
-    "comfy-wide-fixed"        # Sans   | Wide    | Monospaced | No        |
-    "comfy-wide-duo"          # Sans   | Wide    | Duospaced  | Yes       |
+    "comfy-wide" #            | Sans   | Wide    | Monospaced | Yes       |
+    "comfy-wide-fixed" #      | Sans   | Wide    | Monospaced | No        |
+    "comfy-wide-duo" #        | Sans   | Wide    | Duospaced  | Yes       |
     # ------------------------+--------+---------+------------+-----------|
-    "comfy-wide-motion"       # Slab   | Wide    | Monospaced | Yes       |
+    "comfy-wide-motion" #     | Slab   | Wide    | Monospaced | Yes       |
     "comfy-wide-motion-fixed" # Slab   | Wide    | Monospaced | No        |
-    "comfy-wide-motion-duo"   # Slab   | Wide    | Duospaced  | Yes       |
+    "comfy-wide-motion-duo" # | Slab   | Wide    | Duospaced  | Yes       |
   ];
-  version = "1.3.0";
-  src = fetchFromSourcehut {
-    owner = "~protesilaos";
+  version = "2.0.0";
+  src = fetchFromGitHub {
+    owner = "protesilaos";
     repo = "iosevka-comfy";
     rev = version;
-    sha256 = "sha256-ajzUbobNf+Je8ls9htOCLPsB0OPSiqZzrc8bO6hQvio=";
+    sha256 = "sha256-wDcBaNXIzOQ3/LBuW3YUnx/fjtJMeI+jsxLRBlsd1M0=";
   };
   privateBuildPlan = src.outPath + "/private-build-plans.toml";
   makeIosevkaFont = set:
     let superBuildNpmPackage = buildNpmPackage; in
-    (iosevka.override rec {
+    (iosevka.override {
       inherit set privateBuildPlan;
       buildNpmPackage = args: superBuildNpmPackage
         (args // {
+          pname = "iosevka-${set}";
           inherit version;
 
           src = fetchFromGitHub {
             owner = "be5invis";
             repo = "iosevka";
-            rev = "7ef24b8d87fe50793444f9f84b140767f7e47029";
-            hash = "sha256-RVBgJVMNyxV1KeNniwySsJUOmLDh6sFZju8szvzKlH4=";
+            rev = "v31.3.0";
+            hash = "sha256-WrRxVrBJeyUwv0/DYTIHLi52+k2PilC7ay0tc5yq3Pw=";
           };
 
-          npmDepsHash = "sha256-yogUBf+yfjfK8DE4gGgoGaTaYZagW8R1pCn7y0rEPt4=";
+          npmDepsHash = "sha256-xw0GA1aIA/J5hfLQBSE+GJzXfbfWQI2k2pYdenlM9NY=";
 
           meta = with lib; {
             inherit (src.meta) homepage;

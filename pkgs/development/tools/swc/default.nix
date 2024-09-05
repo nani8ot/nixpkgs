@@ -5,22 +5,26 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "swc";
-  version = "0.91.19";
+  version = "0.91.369";
+
+  env = {
+    # swc depends on nightly features
+    RUSTC_BOOTSTRAP = 1;
+  };
 
   src = fetchCrate {
     pname = "swc_cli";
     inherit version;
-    sha256 = "sha256-BzReetAOKSGzHhITXpm+J2Rz8d9Hq2HUagQmfst74Ag=";
+    hash = "sha256-6n6zHMV87h1kmjzEmdE86/toHI99q2HO1EEGHUE9sg8=";
   };
 
-  cargoSha256 = "sha256-1U9YLrPYENv9iJobCxtgnQakJLDctWQwnDUtpLG3PGc=";
-
-  buildFeatures = [ "swc_core/plugin_transform_host_native" ];
+  cargoHash = "sha256-/Ku0W+L2mqVYDSkd2zRqM7UhHueXya4zjewp/xO/XlQ";
 
   meta = with lib; {
     description = "Rust-based platform for the Web";
+    mainProgram = "swc";
     homepage = "https://github.com/swc-project/swc";
     license = licenses.asl20;
-    maintainers = with maintainers; [ dit7ya ];
+    maintainers = with maintainers; [ dit7ya kashw2 ];
   };
 }

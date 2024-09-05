@@ -4,7 +4,6 @@
 , pkg-config
 , cmake
 , libvorbis
-, ffmpeg
 , libeb
 , hunspell
 , opencc
@@ -26,20 +25,21 @@
 , qtmultimedia
 , qtspeech
 , wrapQtAppsHook
+, wrapGAppsHook3
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "goldendict-ng";
-  version = "23.07.23";
+  version = "24.05.05";
 
   src = fetchFromGitHub {
     owner = "xiaoyifang";
     repo = "goldendict-ng";
-    rev = "v${finalAttrs.version}";
-    hash = "sha256-ZKbrO5L4KFmr2NsGDihRWBeW0OXHoPRwZGj6kt1Anc8=";
+    rev = "v${finalAttrs.version}-LiXia.ecd1138c";
+    hash = "sha256-C/0FUFLE3R+tZyCL88BiSFOHPTanILD/fIIQ/OQBSfk=";
   };
 
-  nativeBuildInputs = [ pkg-config cmake wrapQtAppsHook ];
+  nativeBuildInputs = [ pkg-config cmake wrapQtAppsHook wrapGAppsHook3 ];
   buildInputs = [
     qtbase
     qtsvg
@@ -48,6 +48,7 @@ stdenv.mkDerivation (finalAttrs: {
     qt5compat
     qtmultimedia
     qtspeech
+    qtwayland
     libvorbis
     tomlplusplus
     fmt
@@ -59,15 +60,21 @@ stdenv.mkDerivation (finalAttrs: {
     libiconv
     opencc
     libeb
-    ffmpeg
     xapian
     libzim
   ];
 
+  # to prevent double wrapping of wrapQtApps and wrapGApps
+  dontWrapGApps = true;
+
+  preFixup = ''
+    qtWrapperArgs+=("''${gappsWrapperArgs[@]}")
+  '';
+
   cmakeFlags = [
     "-DWITH_XAPIAN=ON"
     "-DWITH_ZIM=ON"
-    "-DWITH_FFMPEG_PLAYER=ON"
+    "-DWITH_FFMPEG_PLAYER=OFF"
     "-DWITH_EPWING_SUPPORT=ON"
     "-DUSE_SYSTEM_FMT=ON"
     "-DUSE_SYSTEM_TOML=ON"
@@ -75,9 +82,10 @@ stdenv.mkDerivation (finalAttrs: {
 
   meta = with lib; {
     homepage = "https://xiaoyifang.github.io/goldendict-ng/";
-    description = "Advanced multi-dictionary lookup program.";
+    description = "Advanced multi-dictionary lookup program";
     platforms = platforms.linux;
-    maintainers = with maintainers; [ slbtty ];
+    mainProgram = "goldendict";
+    maintainers = with maintainers; [ slbtty michojel ];
     license = licenses.gpl3Plus;
   };
 })

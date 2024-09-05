@@ -1,4 +1,5 @@
 { lib
+, stdenv
 , rustPlatform
 , buildNpmPackage
 , fetchFromGitHub
@@ -7,6 +8,7 @@
 , sqlite
 , testers
 , moonfire-nvr
+, darwin
 }:
 
 let
@@ -21,7 +23,7 @@ let
   ui = buildNpmPackage {
     inherit version src;
     pname = "${pname}-ui";
-    sourceRoot = "source/ui";
+    sourceRoot = "${src.name}/ui";
     npmDepsHash = "sha256-IpZWgMo6Y3vRn9h495ifMB3tQxobLeTLC0xXS1vrKLA=";
     installPhase = ''
       runHook preInstall
@@ -34,7 +36,7 @@ let
 in rustPlatform.buildRustPackage {
   inherit pname version src;
 
-  sourceRoot = "source/server";
+  sourceRoot = "${src.name}/server";
 
   cargoLock = {
     lockFile = ./Cargo.lock;
@@ -52,7 +54,9 @@ in rustPlatform.buildRustPackage {
   buildInputs = [
     ncurses
     sqlite
-  ];
+  ] ++ lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
+    Security
+  ]);
 
   postInstall = ''
     mkdir -p $out/lib/ui
@@ -76,5 +80,6 @@ in rustPlatform.buildRustPackage {
     changelog = "https://github.com/scottlamb/moonfire-nvr/releases/tag/v${version}";
     license = licenses.gpl3Only;
     maintainers = with maintainers; [ gaelreyrol ];
+    mainProgram = "moonfire-nvr";
   };
 }

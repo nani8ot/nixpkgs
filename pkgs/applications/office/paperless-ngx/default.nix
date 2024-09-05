@@ -1,10 +1,13 @@
 { lib
+, stdenv
 , fetchFromGitHub
 , buildNpmPackage
 , nixosTests
 , gettext
 , python3
-, ghostscript
+, giflib
+, darwin
+, ghostscript_headless
 , imagemagickBig
 , jbig2enc
 , optipng
@@ -14,27 +17,47 @@
 , unpaper
 , poppler_utils
 , liberation_ttf
+, xcbuild
+, pango
+, pkg-config
+, nltk-data
+, xorg
 }:
 
 let
-  version = "1.16.5";
+  version = "2.11.6";
 
   src = fetchFromGitHub {
     owner = "paperless-ngx";
     repo = "paperless-ngx";
     rev = "refs/tags/v${version}";
-    hash = "sha256-suwXFqq3QSdY0KzSpr6NKPwm6xtMBR8aP5VV3XTynqI=";
+    hash = "sha256-RNX+KS2h9zrOK8QzeQWH55pkNPTDW4gic2HLG+XXLRg=";
   };
 
-  # Use specific package versions required by paperless-ngx
+  # subpath installation is broken with uvicorn >= 0.26
+  # https://github.com/NixOS/nixpkgs/issues/298719
+  # https://github.com/paperless-ngx/paperless-ngx/issues/5494
   python = python3.override {
-    packageOverrides = self: super: {
-      django = super.django_4;
+    self = python;
+    packageOverrides = final: prev: {
+      # tesseract5 may be overwritten in the paperless module and we need to propagate that to make the closure reduction effective
+      ocrmypdf = prev.ocrmypdf.override { tesseract = tesseract5; };
+
+      uvicorn = prev.uvicorn.overridePythonAttrs (_: {
+        version = "0.25.0";
+        src = fetchFromGitHub {
+          owner = "encode";
+          repo = "uvicorn";
+          rev = "0.25.0";
+          hash = "sha256-ng98DTw49zyFjrPnEwfnPfONyjKKZYuLl0qduxSppYk=";
+        };
+      });
     };
   };
 
+
   path = lib.makeBinPath [
-    ghostscript
+    ghostscript_headless
     imagemagickBig
     jbig2enc
     optipng
@@ -49,15 +72,25 @@ let
     pname = "paperless-ngx-frontend";
     inherit version src;
 
-    npmDepsHash = "sha256-rzIDivZTZZWt6kgLt8mstYmvv5TlC+O8O/g01+aLMHQ=";
-
-    nativeBuildInputs = [
-      python3
-    ];
-
     postPatch = ''
       cd src-ui
     '';
+
+    npmDepsHash = "sha256-ML1Yp3JIMbRF6kVu190ReoY7oDUtUfNkHE7dHF6YUAE=";
+
+    nativeBuildInputs = [
+      pkg-config
+      python3
+    ] ++ lib.optionals stdenv.isDarwin [
+      xcbuild
+    ];
+
+    buildInputs = [
+      pango
+    ] ++ lib.optionals stdenv.isDarwin [
+      giflib
+      darwin.apple_sdk.frameworks.CoreText
+    ];
 
     CYPRESS_INSTALL_BINARY = "0";
     NG_CLI_ANALYTICS = "false";
@@ -89,146 +122,92 @@ python.pkgs.buildPythonApplication rec {
 
   nativeBuildInputs = [
     gettext
+    xorg.lndir
   ];
 
   propagatedBuildInputs = with python.pkgs; [
-    amqp
-    anyio
-    asgiref
-    async-timeout
-    attrs
-    autobahn
-    automat
-    billiard
     bleach
-    celery
-    certifi
-    cffi
-    channels-redis
     channels
-    charset-normalizer
-    click
-    click-didyoumean
-    click-plugins
-    click-repl
-    coloredlogs
+    channels-redis
     concurrent-log-handler
-    constantly
-    cryptography
     dateparser
+    django
+    django-allauth
+    django-auditlog
     django-celery-results
-    django-cors-headers
     django-compression-middleware
+    django-cors-headers
     django-extensions
     django-filter
     django-guardian
-    django
-    djangorestframework-guardian2
+    django-multiselectfield
+    django-soft-delete
     djangorestframework
+    djangorestframework-guardian2
+    drf-writable-nested
     filelock
+    flower
+    gotenberg-client
     gunicorn
-    h11
-    hiredis
-    httptools
-    httpx
-    humanfriendly
-    humanize
-    hyperlink
-    idna
     imap-tools
-    img2pdf
-    incremental
-    inotify-simple
     inotifyrecursive
-    joblib
     langdetect
-    lxml
-    msgpack
     mysqlclient
     nltk
     ocrmypdf
-    packaging
     pathvalidate
     pdf2image
-    pikepdf
-    pillow
-    pluggy
-    portalocker
-    prompt-toolkit
-    psycopg2
-    pyasn1-modules
-    pyasn1
-    pycparser
-    pyopenssl
+    psycopg
     python-dateutil
     python-dotenv
-    python-ipware
     python-gnupg
+    python-ipware
     python-magic
-    pytz
-    pyyaml
     pyzbar
     rapidfuzz
     redis
-    regex
-    reportlab
-    requests
     scikit-learn
-    scipy
-    service-identity
     setproctitle
-    sniffio
-    sqlparse
-    threadpoolctl
     tika-client
-    tornado
     tqdm
-    twisted
-    txaio
-    tzdata
-    tzlocal
-    urllib3
     uvicorn
-    uvloop
-    vine
     watchdog
-    watchfiles
-    wcwidth
-    webencodings
-    websockets
     whitenoise
     whoosh
-    zipp
-    zope_interface
-    zxing_cpp
+    zxing-cpp
   ]
   ++ redis.optional-dependencies.hiredis
-  ++ twisted.optional-dependencies.tls
   ++ uvicorn.optional-dependencies.standard;
 
   postBuild = ''
     # Compile manually because `pythonRecompileBytecodeHook` only works
     # for files in `python.sitePackages`
-    ${python.pythonForBuild.interpreter} -OO -m compileall src
+    ${python.pythonOnBuildForHost.interpreter} -OO -m compileall src
 
     # Collect static files
-    ${python.pythonForBuild.interpreter} src/manage.py collectstatic --clear --no-input
+    ${python.pythonOnBuildForHost.interpreter} src/manage.py collectstatic --clear --no-input
 
     # Compile string translations using gettext
-    ${python.pythonForBuild.interpreter} src/manage.py compilemessages
+    ${python.pythonOnBuildForHost.interpreter} src/manage.py compilemessages
   '';
 
-  installPhase = ''
-    mkdir -p $out/lib/paperless-ngx
+  installPhase = let
+    pythonPath = python.pkgs.makePythonPath propagatedBuildInputs;
+  in ''
+    runHook preInstall
+
+    mkdir -p $out/lib/paperless-ngx/static/frontend
     cp -r {src,static,LICENSE,gunicorn.conf.py} $out/lib/paperless-ngx
-    ln -s ${frontend}/lib/paperless-ui/frontend $out/lib/paperless-ngx/static/
+    lndir -silent ${frontend}/lib/paperless-ui/frontend $out/lib/paperless-ngx/static/frontend
     chmod +x $out/lib/paperless-ngx/src/manage.py
     makeWrapper $out/lib/paperless-ngx/src/manage.py $out/bin/paperless-ngx \
-      --prefix PYTHONPATH : "$PYTHONPATH" \
+      --prefix PYTHONPATH : "${pythonPath}" \
       --prefix PATH : "${path}"
     makeWrapper ${python.pkgs.celery}/bin/celery $out/bin/celery \
-      --prefix PYTHONPATH : "$PYTHONPATH:$out/lib/paperless-ngx/src" \
+      --prefix PYTHONPATH : "${pythonPath}:$out/lib/paperless-ngx/src" \
       --prefix PATH : "${path}"
+
+    runHook postInstall
   '';
 
   postFixup = ''
@@ -238,15 +217,16 @@ python.pkgs.buildPythonApplication rec {
 
   nativeCheckInputs = with python.pkgs; [
     daphne
-    factory_boy
+    factory-boy
     imagehash
-    pdfminer-six
+    pytest-cov-stub
     pytest-django
     pytest-env
     pytest-httpx
+    pytest-mock
+    pytest-rerunfailures
     pytest-xdist
     pytestCheckHook
-    reportlab
   ];
 
   pytestFlagsArray = [
@@ -261,26 +241,24 @@ python.pkgs.buildPythonApplication rec {
     export PATH="${path}:$PATH"
     export HOME=$(mktemp -d)
     export XDG_DATA_DIRS="${liberation_ttf}/share:$XDG_DATA_DIRS"
-
-    # Disable unneeded code coverage test
-    substituteInPlace src/setup.cfg \
-      --replace "--cov --cov-report=html --cov-report=xml" ""
-    # OCR on NixOS recognizes the space in the picture, upstream CI doesn't.
-    # See https://github.com/paperless-ngx/paperless-ngx/pull/2216
-    substituteInPlace src/paperless_tesseract/tests/test_parser.py \
-      --replace "this is awebp document" "this is a webp document"
   '';
 
   disabledTests = [
     # FileNotFoundError(2, 'No such file or directory'): /build/tmp...
     "test_script_with_output"
+    "test_script_exit_non_zero"
     # AssertionError: 10 != 4 (timezone/time issue)
     # Due to getting local time from modification date in test_consumer.py
     "testNormalOperation"
+    # Something broken with new Tesseract and inline RTL/LTR overrides?
+    "test_rtl_language_detection"
   ];
 
+  doCheck = !stdenv.isDarwin;
+
   passthru = {
-    inherit python path frontend;
+    inherit python path frontend tesseract5;
+    nltkData = with nltk-data; [ punkt_tab snowball_data stopwords ];
     tests = { inherit (nixosTests) paperless; };
   };
 
@@ -289,7 +267,7 @@ python.pkgs.buildPythonApplication rec {
     homepage = "https://docs.paperless-ngx.com/";
     changelog = "https://github.com/paperless-ngx/paperless-ngx/releases/tag/v${version}";
     license = licenses.gpl3Only;
-    platforms = platforms.linux;
-    maintainers = with maintainers; [ lukegb gador erikarvstedt leona ];
+    platforms = platforms.unix;
+    maintainers = with maintainers; [ leona SuperSandro2000 erikarvstedt ];
   };
 }

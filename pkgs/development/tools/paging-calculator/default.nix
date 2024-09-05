@@ -5,17 +5,18 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "paging-calculator";
-  version = "0.2.0";
+  version = "0.4.0";
 
   src = fetchCrate {
     inherit pname version;
-    hash = "sha256-GxugaNLkLy71X/E9EAn/2p2ReSHvs5TvXAxg8csu9uc=";
+    hash = "sha256-mTHBARrcq8cJxzh80v/fGr5vACAMyy/DhN8zpQTV0jM=";
   };
 
-  cargoHash = "sha256-a1yryyKCcNQVurqnb+AZiBQ0rilNsuXmSsFoaaBe+r8=";
+  cargoHash = "sha256-oQQA+AGsuMKaFhoZRuv3BASCLJwfgbrdK+2noxBLm7k=";
 
   meta = {
     description = "CLI utility that helps calculating page table indices from a virtual address";
+    mainProgram = "paging-calculator";
     longDescription = ''
       paging-calculator is a CLI utility written in Rust that helps you finding the indices that a
       virtual address will have into the page tables on different architectures.

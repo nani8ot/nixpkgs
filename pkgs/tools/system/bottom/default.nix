@@ -4,20 +4,22 @@
 , installShellFiles
 , stdenv
 , darwin
+, bottom
+, testers
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "bottom";
-  version = "0.9.4";
+  version = "0.10.2";
 
   src = fetchFromGitHub {
     owner = "ClementTsang";
     repo = pname;
     rev = version;
-    hash = "sha256-9WQdudO2tIvxDHfJ87zvJeMfpuFSr4D5zGteL7Od2fQ=";
+    hash = "sha256-hm0Xfd/iW+431HflvZErjzeZtSdXVb/ReoNIeETJ5Ik=";
   };
 
-  cargoHash = "sha256-aRN6V6r+JYi6yUcXei2f7l7oZ+8IkUmw1sgOwZJOtIE=";
+  cargoHash = "sha256-FQbJx6ijX8kE4qxT7OQ7FwxLKJB5/moTKhBK0bfvBas=";
 
   nativeBuildInputs = [ installShellFiles ];
 
@@ -32,12 +34,18 @@ rustPlatform.buildRustPackage rec {
     installShellCompletion \
       target/tmp/bottom/completion/btm.{bash,fish} \
       --zsh target/tmp/bottom/completion/_btm
+
+    install -Dm444 desktop/bottom.desktop -t $out/share/applications
   '';
 
   BTM_GENERATE = true;
 
+  passthru.tests.version = testers.testVersion {
+    package = bottom;
+  };
+
   meta = with lib; {
-    description = "A cross-platform graphical process/system monitor with a customizable interface";
+    description = "Cross-platform graphical process/system monitor with a customizable interface";
     homepage = "https://github.com/ClementTsang/bottom";
     changelog = "https://github.com/ClementTsang/bottom/blob/${version}/CHANGELOG.md";
     license = licenses.mit;

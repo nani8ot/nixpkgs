@@ -15,22 +15,22 @@ buildGoModule rec {
     sha256 = "0gi39jmnzqrgj146yw8lcmgmvzx7ii1dgw4iqig7kx8c0jiqi600";
   };
 
-  vendorSha256 = null;
+  vendorHash = null;
 
   nativeBuildInputs = [ installShellFiles ];
 
   subPackages = [ "." ];
 
-  ldflags = [ "-s" "-w" ] ++ (with lib;
-    mapAttrsToList (n: v: "-X github.com/sahib/brig/version.${n}=${v}")
-      (with versions; {
-        Major = major version;
-        Minor = minor version;
-        Patch = patch version;
+  ldflags = [ "-s" "-w" ] ++
+    lib.mapAttrsToList (n: v: "-X github.com/sahib/brig/version.${n}=${v}")
+      {
+        Major = lib.versions.major version;
+        Minor = lib.versions.minor version;
+        Patch = lib.versions.patch version;
         ReleaseType = "";
         BuildTime = "1970-01-01T00:00:00+0000";
         GitRev = src.rev;
-      }));
+      };
 
   postInstall = ''
     installShellCompletion --cmd brig \
@@ -51,7 +51,8 @@ buildGoModule rec {
     '';
     homepage = "https://brig.readthedocs.io";
     changelog = "https://github.com/sahib/brig/releases/tag/${src.rev}";
-    license = licenses.agpl3;
+    license = licenses.agpl3Only;
     maintainers = with maintainers; [ offline ];
+    mainProgram = "brig";
   };
 }

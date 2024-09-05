@@ -2,7 +2,7 @@
 , stdenv
 , fetchFromGitHub
 , fetchpatch
-, zigHook
+, zig_0_11
 }:
 
 stdenv.mkDerivation rec {
@@ -33,7 +33,7 @@ stdenv.mkDerivation rec {
   ];
 
   nativeBuildInputs = [
-    zigHook
+    zig_0_11.hook
   ];
 
   meta = with lib; {
@@ -43,5 +43,6 @@ stdenv.mkDerivation rec {
     license = licenses.mit;
     maintainers = with maintainers; [ figsoda ];
     platforms = platforms.linux;
+    mainProgram = "poop";
   };
 }

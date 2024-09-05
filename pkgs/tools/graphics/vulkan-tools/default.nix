@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , fetchFromGitHub
+, buildPackages
 , cmake
 , pkg-config
 , python3
@@ -13,8 +14,10 @@
 , libXrandr
 , vulkan-headers
 , vulkan-loader
+, vulkan-volk
 , wayland
 , wayland-protocols
+, wayland-scanner
 , moltenvk
 , AppKit
 , Cocoa
@@ -22,13 +25,13 @@
 
 stdenv.mkDerivation rec {
   pname = "vulkan-tools";
-  version = "1.3.254";
+  version = "1.3.283.0";
 
   src = fetchFromGitHub {
     owner = "KhronosGroup";
     repo = "Vulkan-Tools";
-    rev = "v${version}";
-    hash = "sha256-MyYngyoIGpGu1jFN1GDm9BcFye1JRz1cN6SaZue1ZGQ=";
+    rev = "vulkan-sdk-${version}";
+    hash = "sha256-IAlqFCenv5e70XyLSYh2fE84JZQFJwg+YKTGaK7ShKA=";
   };
 
   nativeBuildInputs = [
@@ -41,6 +44,7 @@ stdenv.mkDerivation rec {
     glslang
     vulkan-headers
     vulkan-loader
+    vulkan-volk
   ] ++ lib.optionals (!stdenv.isDarwin) [
     libffi
     libX11
@@ -50,6 +54,7 @@ stdenv.mkDerivation rec {
     libXrandr
     wayland
     wayland-protocols
+    wayland-scanner
   ] ++ lib.optionals stdenv.isDarwin [
     moltenvk
     moltenvk.dev
@@ -59,38 +64,22 @@ stdenv.mkDerivation rec {
 
   libraryPath = lib.strings.makeLibraryPath [ vulkan-loader ];
 
-  patches = [
-    # Vulkan-Tools expects to find the MoltenVK ICD and `libMoltenVK.dylib` in its source repo.
-    # Patch it to use the already-built binaries and ICD in nixpkgs.
-    ./use-nix-moltenvk.patch
-  ];
-
-  # vkcube.app and vkcubepp.app require `ibtool`, but the version in `xib2nib` is not capable of
-  # building these apps. Build them using `ibtool` from Xcode, but don’t allow any other binaries
-  # into the sandbox. Note that the CLT are not supported because `ibtool` requires Xcode.
-  sandboxProfile = lib.optionalString stdenv.isDarwin ''
-    (allow process-exec
-      (literal "/usr/bin/ibtool")
-      (regex "/Xcode.app/Contents/Developer/usr/bin/ibtool")
-      (regex "/Xcode.app/Contents/Developer/usr/bin/xcodebuild"))
-    (allow file-read*)
-    (deny file-read* (subpath "/usr/local") (with no-log))
-    (allow file-write* (subpath "/private/var/folders"))
-  '';
-
   dontPatchELF = true;
+
+  env.PKG_CONFIG_WAYLAND_SCANNER_WAYLAND_SCANNER = lib.getExe buildPackages.wayland-scanner;
 
   cmakeFlags = [
     # Don't build the mock ICD as it may get used instead of other drivers, if installed
     "-DBUILD_ICD=OFF"
     # vulkaninfo loads libvulkan using dlopen, so we have to add it manually to RPATH
     "-DCMAKE_INSTALL_RPATH=${libraryPath}"
-    "-DPKG_CONFIG_EXECUTABLE=${pkg-config}/bin/pkg-config"
+    "-DGLSLANG_INSTALL_DIR=${glslang}"
     # Hide dev warnings that are useless for packaging
     "-Wno-dev"
   ] ++ lib.optionals stdenv.isDarwin [
     "-DMOLTENVK_REPO_ROOT=${moltenvk}/share/vulkan/icd.d"
-    "-DIBTOOL=/usr/bin/ibtool"
+    # Don’t build the cube demo because it requires `ibtool`, which is not available in nixpkgs.
+    "-DBUILD_CUBE=OFF"
   ];
 
   meta = with lib; {
@@ -101,7 +90,6 @@ stdenv.mkDerivation rec {
       use of the Vulkan API.
     '';
     homepage    = "https://github.com/KhronosGroup/Vulkan-Tools";
-    hydraPlatforms = [ "x86_64-linux" "i686-linux" ];
     platforms   = platforms.unix;
     license     = licenses.asl20;
     maintainers = [ maintainers.ralith ];

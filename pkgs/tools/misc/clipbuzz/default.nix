@@ -1,33 +1,32 @@
 { lib
 , stdenv
-, fetchFromSourcehut
+, fetchzip
 , libX11
 , libXfixes
-, zigHook
+, zig
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "clipbuzz";
-  version = "2.0.0";
+  version = "2.0.1";
 
-  src = fetchFromSourcehut {
-    owner = "~cnx";
-    repo = "clipbuzz";
-    rev = finalAttrs.version;
-    hash = "sha256-V5bAZHoScTzFZBPUhPd7xc/c32SXPLAJp+vsc/lCyeI=";
+  src = fetchzip {
+    url = "https://trong.loang.net/~cnx/clipbuzz/snapshot/clipbuzz-${finalAttrs.version}.tar.gz";
+    hash = "sha256-2//IwthAjGyVSZaXjgpM1pUJGYWZVkrJ6JyrVbzOtr8=";
   };
 
-  nativeBuildInputs = [ zigHook ];
+  nativeBuildInputs = [ zig.hook ];
 
   buildInputs = [
     libX11
     libXfixes
   ];
 
-  meta =  {
+  meta = {
     description = "Buzz on new X11 clipboard events";
-    homepage = "https://git.sr.ht/~cnx/clipbuzz";
+    homepage = "https://trong.loang.net/~cnx/clipbuzz";
     license = lib.licenses.unlicense;
     maintainers = [ lib.maintainers.McSinyx ];
+    mainProgram = "clipbuzz";
   };
 })

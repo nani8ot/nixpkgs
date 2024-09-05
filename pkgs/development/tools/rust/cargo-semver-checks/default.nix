@@ -1,9 +1,7 @@
 { lib
 , rustPlatform
 , fetchFromGitHub
-, pkg-config
-, libgit2
-, openssl
+, cmake
 , zlib
 , stdenv
 , darwin
@@ -12,52 +10,44 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "cargo-semver-checks";
-  version = "0.22.1";
+  version = "0.34.0";
 
   src = fetchFromGitHub {
     owner = "obi1kenobi";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-Qb01NLWCD7nglceJdUTnlf/XtPHl1P6ukr+QsjxMMos=";
+    hash = "sha256-U7ykTLEuREe2GTVswcAw3R3h4zbkWxuI2dt/2689xSA=";
   };
 
-  cargoHash = "sha256-Qe/AGLoaCpbo001JkCN5qFytL4vWIPWhy3/pfBRoMmo=";
+  cargoHash = "sha256-NoxYHwY5XpRiqrOjQsaSWQCXFalNAS9SchaKwHbB2uU=";
 
-  nativeBuildInputs = [ pkg-config ];
+  nativeBuildInputs = [
+    cmake
+  ];
 
   buildInputs = [
-    libgit2
-    openssl
     zlib
   ] ++ lib.optionals stdenv.isDarwin [
-    darwin.apple_sdk.frameworks.Security
+    darwin.apple_sdk.frameworks.SystemConfiguration
   ];
-
-  nativeCheckInputs = [
-    git
-  ];
-
-  # use system openssl
-  buildNoDefaultFeatures = true;
 
   checkFlags = [
-    # requires nightly version of cargo-rustdoc
-    "--skip=both_passing_manifest_path_and_directory_works"
-    "--skip=rustdoc_cmd::tests"
-    "--skip=verify_binary_contains_lints"
-
     # requires internet access
     "--skip=detects_target_dependencies"
   ];
 
   preCheck = ''
     patchShebangs scripts/regenerate_test_rustdocs.sh
-    git init
+    substituteInPlace scripts/regenerate_test_rustdocs.sh \
+      --replace-fail \
+        'TOPLEVEL="$(git rev-parse --show-toplevel)"' \
+        "TOPLEVEL=$PWD"
     scripts/regenerate_test_rustdocs.sh
   '';
 
   meta = with lib; {
-    description = "A tool to scan your Rust crate for semver violations";
+    description = "Tool to scan your Rust crate for semver violations";
+    mainProgram = "cargo-semver-checks";
     homepage = "https://github.com/obi1kenobi/cargo-semver-checks";
     changelog = "https://github.com/obi1kenobi/cargo-semver-checks/releases/tag/v${version}";
     license = with licenses; [ mit /* or */ asl20 ];

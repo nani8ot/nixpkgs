@@ -9,7 +9,7 @@
 , pkg-config
 , python3
 , stdenv
-, wrapGAppsHook
+, wrapGAppsHook3
 }:
 
 stdenv.mkDerivation rec {
@@ -28,11 +28,11 @@ stdenv.mkDerivation rec {
     meson
     ninja
     pkg-config
-    wrapGAppsHook
+    wrapGAppsHook3
+    gobject-introspection
   ];
 
   buildInputs = [
-    gobject-introspection
     gtk3
     libhandy
     (python3.withPackages (ps: with ps; [
@@ -43,6 +43,7 @@ stdenv.mkDerivation rec {
 
   meta = with lib; {
     description = "Postal package tracking application";
+    mainProgram = "shipments";
     homepage = "https://sr.ht/~martijnbraam/shipments/";
     changelog = "https://git.sr.ht/~martijnbraam/shipments/refs/${version}";
     license = licenses.lgpl3;

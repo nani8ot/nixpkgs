@@ -3,28 +3,29 @@
 , fetchFromGitHub
 , installShellFiles
 , testers
-, zf
-, zigHook
+, zig_0_13
+, callPackage
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "zf";
-  version = "0.8.0";
+  version = "0.9.2";
 
   src = fetchFromGitHub {
     owner = "natecraddock";
     repo = "zf";
     rev = "refs/tags/${finalAttrs.version}";
-    fetchSubmodules = true;
-    hash = "sha256-MzlSU5x2lb6PJZ/iNAi2aebfuClBprlfHMIG/4OPmuc=";
+    hash = "sha256-8KfzsDG9sZ/jMOusz2ydt3oytp891vKOpCUlPAwS8TE=";
   };
 
   nativeBuildInputs = [
     installShellFiles
-    zigHook
+    zig_0_13.hook
   ];
 
-  doCheck = false; # it's failing somehow
+  postPatch = ''
+    cp -a ${callPackage ./deps.nix { }}/. $ZIG_GLOBAL_CACHE_DIR/p
+  '';
 
   postInstall = ''
     installManPage doc/zf.1
@@ -34,13 +35,15 @@ stdenv.mkDerivation (finalAttrs: {
       --zsh complete/_zf
   '';
 
-  passthru.tests.version = testers.testVersion { package = finalAttrs.zf; };
+  passthru.tests.version = testers.testVersion { package = finalAttrs.finalPackage; };
 
   meta = {
     homepage = "https://github.com/natecraddock/zf";
-    description = "A commandline fuzzy finder that prioritizes matches on filenames";
+    description = "Commandline fuzzy finder that prioritizes matches on filenames";
+    changelog = "https://github.com/natecraddock/zf/releases/tag/${finalAttrs.version}";
     license = lib.licenses.mit;
     platforms = lib.platforms.unix;
-    maintainers = with lib.maintainers; [ dit7ya mmlb ];
+    maintainers = with lib.maintainers; [ dit7ya figsoda mmlb ];
+    mainProgram = "zf";
   };
 })
