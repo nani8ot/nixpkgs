@@ -66,7 +66,8 @@ in
         QBITTORRENT_USERNAME = cfg.username;
         QBITTORRENT_TIMEOUT = toString cfg.timeout;
         DISABLE_TRACKER = boolToString cfg.disableTracker;
-      } // cfg.extraEnv;
+      };
+      #} // cfg.extraEnv;
     } // optionalAttrs (cfg.environmentFile != null) {
       EnvironmentFile = cfg.environmentFile;
     };
