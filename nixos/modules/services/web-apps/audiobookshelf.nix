@@ -63,15 +63,68 @@ in
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
 
-      serviceConfig = {
-        Type = "simple";
-        User = cfg.user;
-        Group = cfg.group;
-        StateDirectory = cfg.dataDir;
-        WorkingDirectory = "/var/lib/${cfg.dataDir}";
-        ExecStart = "${cfg.package}/bin/audiobookshelf --host ${cfg.host} --port ${toString cfg.port}";
-        Restart = "on-failure";
-      };
+      serviceConfig =
+        {
+          Type = "simple";
+          User = cfg.user;
+          Group = cfg.group;
+          StateDirectory = cfg.dataDir;
+          WorkingDirectory = "/var/lib/${cfg.dataDir}";
+          ExecStart = "${cfg.package}/bin/audiobookshelf --host ${cfg.host} --port ${toString cfg.port}";
+          Restart = "on-failure";
+          # Hardening
+          LockPersonality = true;
+          NoNewPrivileges = true;
+          PrivateDevices = true;
+          PrivateIPC = true;
+          PrivateTmp = true;
+          ProcSubset = "pid";
+          ProtectClock = true;
+          ProtectControlGroups = true;
+          ProtectHome = true;
+          ProtectHostname = true;
+          ProtectKernelLogs = true;
+          ProtectKernelModules = true;
+          ProtectKernelTunables = true;
+          ProtectProc = "invisible";
+          RemoveIPC = true;
+          RestrictAddressFamilies = [
+            "AF_INET"
+            "AF_INET6"
+          ];
+          RestrictNamespaces = true;
+          RestrictRealtime = true;
+          RestrictSUIDSGID = true;
+          SystemCallArchitectures = "native";
+          SystemCallFilter = [
+            "~@mount"
+            "~@swap"
+            "~@resources"
+            "~@reboot"
+            "~@raw-io"
+            "~@obsolete"
+            "~@module"
+            "~@debug"
+            "~@cpu-emulation"
+            "~@clock"
+            "~@privileged"
+          ];
+          UMask = "0077";
+        }
+        // (
+          if (cfg.port < 1024) then
+            {
+              AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
+              CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
+            }
+          else
+            {
+              # A private user cannot have process capabilities on the host's user
+              # namespace and thus CAP_NET_BIND_SERVICE has no effect.
+              PrivateUsers = true;
+              CapabilityBoundingSet = false;
+            }
+        );
     };
 
     users.users = mkIf (cfg.user == "audiobookshelf") {
